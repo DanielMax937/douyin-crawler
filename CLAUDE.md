@@ -10,7 +10,7 @@ Douyin Video Scanner - a two-component system for scraping Douyin (Chinese TikTo
 
 ```
 Node.js Scraper (douyin-scraper.js)
-    │  - Connects to Chrome via CDP (port 9222)
+    │  - Launches system Chrome via patchright (no CDP; no pre-started browser)
     │  - Scrapes videos with >= 5000 comments
     │  - Uses patchright (Playwright fork) for browser automation
     │  - Human-like behavior simulation (random delays, smooth scrolling)
@@ -39,13 +39,12 @@ node init-db.js --drop       # Reset all data
 ```bash
 npm install                  # Install dependencies
 
-# Start Chrome with remote debugging first:
-/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
-  --remote-debugging-port=9222 \
-  --user-data-dir="./browser-profile" &
-
+# Run scraper (launches system Chrome automatically via patchright)
 node douyin-scraper.js 10    # Scrape 10 videos
 SAVE_TO_FILE=true node douyin-scraper.js 5  # Also save JSON/MD files
+
+# Optional: custom user data dir (default: OS temp dir)
+BROWSER_USER_DATA_DIR=./browser-profile node douyin-scraper.js 5
 ```
 
 ### Worker (Python/Celery)
@@ -75,7 +74,8 @@ brew services start redis
 ## Key Implementation Details
 
 ### Scraper (douyin-scraper.js)
-- Connects to existing Chrome instance via CDP at `127.0.0.1:9222`
+- Launches system Chrome via patchright (`channel: "chrome"`, persistent context); no CDP or pre-started browser
+- Optional `BROWSER_USER_DATA_DIR` for profile path (default: OS temp)
 - Filters videos by `MIN_COMMENTS_THRESHOLD` (default: 5000)
 - Resolves short URLs (v.douyin.com) to full video URLs
 - Parses Chinese number notation (万 = 10,000, 亿 = 100,000,000)

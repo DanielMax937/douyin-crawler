@@ -14,18 +14,20 @@
  *
  * Environment Variables:
  * - SAVE_TO_FILE: Set to 'true' to save JSON/Markdown files (default: false, database only)
+ * - BROWSER_USER_DATA_DIR: Chrome profile directory (default: OS temp/douyin-scraper-user-data)
  * - PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD: PostgreSQL connection settings
  */
 
 const { chromium } = require('patchright');
 const path = require('path');
+const os = require('os');
 const fs = require('fs');
 const { Pool } = require('pg');
 
 // Configuration
 const CONFIG = {
-  CDP_URL: 'http://127.0.0.1:9222',
   DOUYIN_URL: 'https://www.douyin.com/?recommend=1',
+  USER_DATA_DIR: process.env.BROWSER_USER_DATA_DIR || path.join(os.tmpdir(), 'douyin-scraper-user-data'),
   OUTPUT_DIR: path.join(process.cwd(), 'output'),
   SAVE_TO_FILE: process.env.SAVE_TO_FILE === 'true', // Default: false (database only)
   WAIT_TIMEOUT: 5000,
@@ -837,16 +839,29 @@ async function main() {
   // Initialize PostgreSQL
   const pgEnabled = await initPostgres();
 
-  let browser;
+  let context;
   try {
-    // Connect to Chrome
-    console.log('🌐 Connecting to Chrome via CDP...');
-    browser = await chromium.connectOverCDP(CONFIG.CDP_URL);
-    const contexts = browser.contexts();
-    const context = contexts[0];
+    // Launch system Chrome via Playwright (no CDP; uses patchright + channel: "chrome")
+    console.log('🌐 Launching system Chrome (patchright)...');
+    console.log(`   📂 UserDataDir: ${CONFIG.USER_DATA_DIR}`);
 
-    if (!context) {
-      throw new Error('No browser context found');
+    if (!fs.existsSync(CONFIG.USER_DATA_DIR)) {
+      fs.mkdirSync(CONFIG.USER_DATA_DIR, { recursive: true });
+    }
+
+    const launchOptions = {
+      channel: 'chrome',
+      headless: false,
+      viewport: null,
+    };
+
+    context = await chromium.launchPersistentContext(CONFIG.USER_DATA_DIR, launchOptions);
+
+    // Grant clipboard permissions for share/copy link
+    try {
+      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    } catch (permError) {
+      console.log('   ⚠️ Clipboard permission skipped:', permError.message);
     }
 
     // Find or create Douyin tab
@@ -855,8 +870,13 @@ async function main() {
 
     if (!page) {
       console.log('📱 Opening Douyin...');
-      page = await context.newPage();
-      await page.goto(CONFIG.DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      if (pages.length > 0) {
+        page = pages[0];
+        await page.goto(CONFIG.DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      } else {
+        page = await context.newPage();
+        await page.goto(CONFIG.DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      }
       // Human-like wait for page to fully load
       await humanWait(CONFIG.WAIT_TIMEOUT, CONFIG.WAIT_TIMEOUT + 2000);
     } else {
@@ -928,8 +948,13 @@ async function main() {
     console.error('❌ Error:', error.message);
     process.exit(1);
   } finally {
-    if (browser) {
-      await browser.close();
+    if (context) {
+      try {
+        await context.close();
+        console.log('🌐 Browser context closed');
+      } catch (e) {
+        console.log('   ⚠️ Close context:', e.message);
+      }
     }
     await closePostgres();
   }
