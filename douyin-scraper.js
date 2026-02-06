@@ -666,35 +666,29 @@ async function scrapeVideo(page, videoIndex) {
   console.log(`  ❤️  Likes: ${video.stats.likesDisplay}`);
   console.log(`  💬 Comments: ${video.stats.commentsDisplay}`);
 
-  // Check if video meets minimum comments threshold
+  // If below threshold, skip without opening panels — main loop will swipe to next.
   if (video.stats.comments < CONFIG.MIN_COMMENTS_THRESHOLD) {
     console.log(`  ⏭️  Skipping: comments (${video.stats.comments}) < ${CONFIG.MIN_COMMENTS_THRESHOLD}`);
-    return null; // Signal to skip this video
+    return null;
   }
 
-  // Simulate watching the video for a bit before interacting
-  await simulateReading(1000, 2500);
+  // Stay on current page: get comments and share link only, then return (main loop will swipe to next after).
+  await simulateReading(800, 1500);
 
-  // Click comment button and extract comments - use the one inside active video
+  // Comments (stay on current video, no swipe)
   console.log('  💬 Opening comments...');
   try {
     const commentButton = activeVideo.locator(SELECTORS.commentButton).first();
     if (await commentButton.count() > 0) {
-      // Human-like hover and click
       await humanHoverAndClick(page, commentButton, { timeout: 5000 });
       await humanWait(1500, 2500);
 
-      // Wait for comment list to load
       await page.waitForSelector(SELECTORS.commentList, { timeout: 5000 }).catch(() => {});
+      await simulateReading(600, 1200);
 
-      // Simulate reading comments
-      await simulateReading(800, 1500);
-
-      // Extract comments
       video.comments = await extractComments(page);
       console.log(`  📝 Found ${video.comments.length} comments`);
 
-      // Close comment panel with human-like key press
       await humanKeyPress(page, 'Escape');
       await humanWait(300, 600);
     }
@@ -702,21 +696,18 @@ async function scrapeVideo(page, videoIndex) {
     console.log(`  ⚠️  Could not open comments: ${err.message}`);
   }
 
-  // Small pause between actions
-  await humanWait(500, 1200);
+  await humanWait(400, 900);
 
-  // Click share button and get share link - use the one inside active video
+  // Share link (still on current video, no swipe)
   console.log('  🔗 Getting share link...');
   try {
     const shareButton = activeVideo.locator(SELECTORS.shareButton).first();
     if (await shareButton.count() > 0) {
-      // Human-like hover and click
       await humanHoverAndClick(page, shareButton, { timeout: 5000 });
       await humanWait(1200, 2000);
 
       const rawShareLink = await getShareLink(page);
 
-      // Resolve short link to get true URL
       if (rawShareLink) {
         console.log(`  🔗 Raw link: ${rawShareLink}`);
         const resolvedLink = await resolveShortLink(page, rawShareLink);
@@ -731,7 +722,6 @@ async function scrapeVideo(page, videoIndex) {
         console.log(`  🔗 Share link: Not found`);
       }
 
-      // Close share panel with human-like key press
       await humanKeyPress(page, 'Escape');
       await humanWait(300, 600);
     }
