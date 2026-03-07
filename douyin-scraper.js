@@ -410,14 +410,32 @@ function formatNumber(num) {
 }
 
 /**
- * Extract video stats from the page
+ * Capture the currently active video so later actions stay bound to one card.
  */
-async function extractVideoStats(page) {
-  return await page.evaluate((selectors) => {
+async function getActiveVideoSnapshot(activeVideo) {
+  return await activeVideo.evaluate((root, selectors) => {
     const getText = (selector) => {
-      const el = document.querySelector(selector);
+      const el = root.querySelector(selector);
       return el ? el.textContent?.trim() || '' : '';
     };
+
+    const className = root.className || '';
+    const classVideoIdMatch = className.match(/video_(\d+)/);
+
+    const videoEl = root.querySelector('video');
+    const sourceUrl =
+      videoEl?.currentSrc ||
+      videoEl?.src ||
+      root.querySelector('source')?.src ||
+      '';
+    const srcVideoIdMatch = sourceUrl.match(/video\/(\d+)/);
+
+    const linkVideoIdMatch = Array.from(root.querySelectorAll('a[href]'))
+      .map((link) => link.getAttribute('href') || '')
+      .map((href) => href.match(/video\/(\d+)/))
+      .find(Boolean);
+
+    const videoId = classVideoIdMatch?.[1] || srcVideoIdMatch?.[1] || linkVideoIdMatch?.[1] || null;
 
     return {
       title: getText(selectors.videoTitle),
@@ -426,8 +444,50 @@ async function extractVideoStats(page) {
       comments: getText(selectors.commentCount),
       favorites: getText(selectors.favoriteCount),
       shares: getText(selectors.shareCount),
+      videoId,
     };
   }, SELECTORS);
+}
+
+/**
+ * Pause the currently active video so Douyin does not advance while panels are open.
+ */
+async function pauseActiveVideo(activeVideo) {
+  return await activeVideo.evaluate((root) => {
+    const videoEl = root.querySelector('video');
+    if (!videoEl) {
+      return { found: false, paused: false };
+    }
+
+    try {
+      videoEl.pause();
+    } catch (e) {
+      return { found: true, paused: videoEl.paused, error: e.message };
+    }
+
+    return { found: true, paused: videoEl.paused };
+  });
+}
+
+function buildVideoSignature(snapshot) {
+  return [snapshot.videoId || '', snapshot.author || '', snapshot.title || ''].join('||');
+}
+
+/**
+ * Ensure Douyin is still focused on the same video we started scraping.
+ */
+async function assertSameActiveVideo(page, expectedSignature, stage) {
+  const activeVideo = page.locator(SELECTORS.activeVideo).first();
+  const currentSnapshot = await getActiveVideoSnapshot(activeVideo);
+  const currentSignature = buildVideoSignature(currentSnapshot);
+
+  if (currentSignature !== expectedSignature) {
+    throw new Error(
+      `${stage}: active video changed from "${expectedSignature}" to "${currentSignature}"`
+    );
+  }
+
+  return currentSnapshot;
 }
 
 /**
@@ -641,13 +701,22 @@ async function scrapeVideo(page, videoIndex) {
 
   // Wait for video to load (human-like random wait)
   await simulateReading(1500, 3000);
+  await page.waitForSelector(SELECTORS.activeVideo, { timeout: 15000 });
 
   // Get the active video container to scope our selectors
   const activeVideo = page.locator(SELECTORS.activeVideo).first();
 
+  console.log('  ⏸️  Pausing current video...');
+  const pauseResult = await pauseActiveVideo(activeVideo);
+  if (pauseResult.found) {
+    console.log(`  ${pauseResult.paused ? '✅' : '⚠️'} Video ${pauseResult.paused ? 'paused' : 'is still playing'}`);
+  } else {
+    console.log('  ⚠️  Video element not found; continuing');
+  }
+
   // Extract basic stats
   console.log('  📊 Extracting video stats...');
-  const stats = await extractVideoStats(page);
+  const stats = await getActiveVideoSnapshot(activeVideo);
   video.stats = {
     title: stats.title,
     author: stats.author,
@@ -666,6 +735,12 @@ async function scrapeVideo(page, videoIndex) {
   console.log(`  ❤️  Likes: ${video.stats.likesDisplay}`);
   console.log(`  💬 Comments: ${video.stats.commentsDisplay}`);
 
+  const expectedVideoSignature = buildVideoSignature(stats);
+  video.videoId = stats.videoId || null;
+  if (video.videoId) {
+    console.log(`  🆔 Video ID: ${video.videoId}`);
+  }
+
   // If below threshold, skip without opening panels — main loop will swipe to next.
   if (video.stats.comments < CONFIG.MIN_COMMENTS_THRESHOLD) {
     console.log(`  ⏭️  Skipping: comments (${video.stats.comments}) < ${CONFIG.MIN_COMMENTS_THRESHOLD}`);
@@ -678,13 +753,16 @@ async function scrapeVideo(page, videoIndex) {
   // Comments (stay on current video, no swipe)
   console.log('  💬 Opening comments...');
   try {
+    await assertSameActiveVideo(page, expectedVideoSignature, 'before opening comments');
     const commentButton = activeVideo.locator(SELECTORS.commentButton).first();
     if (await commentButton.count() > 0) {
       await humanHoverAndClick(page, commentButton, { timeout: 5000 });
       await humanWait(1500, 2500);
+      await assertSameActiveVideo(page, expectedVideoSignature, 'after opening comments');
 
       await page.waitForSelector(SELECTORS.commentList, { timeout: 5000 }).catch(() => {});
       await simulateReading(600, 1200);
+      await assertSameActiveVideo(page, expectedVideoSignature, 'before extracting comments');
 
       video.comments = await extractComments(page);
       console.log(`  📝 Found ${video.comments.length} comments`);
@@ -701,10 +779,12 @@ async function scrapeVideo(page, videoIndex) {
   // Share link (still on current video, no swipe)
   console.log('  🔗 Getting share link...');
   try {
+    await assertSameActiveVideo(page, expectedVideoSignature, 'before opening share panel');
     const shareButton = activeVideo.locator(SELECTORS.shareButton).first();
     if (await shareButton.count() > 0) {
       await humanHoverAndClick(page, shareButton, { timeout: 5000 });
       await humanWait(1200, 2000);
+      await assertSameActiveVideo(page, expectedVideoSignature, 'after opening share panel');
 
       const rawShareLink = await getShareLink(page);
 
@@ -720,6 +800,11 @@ async function scrapeVideo(page, videoIndex) {
         }
       } else {
         console.log(`  🔗 Share link: Not found`);
+        if (video.videoId) {
+          video.shareLink = `https://www.douyin.com/video/${video.videoId}`;
+          video.shortLink = video.shareLink;
+          console.log(`  🔗 Fallback link: ${video.shareLink}`);
+        }
       }
 
       await humanKeyPress(page, 'Escape');
@@ -856,21 +941,54 @@ async function main() {
 
     // Find or create Douyin tab
     const pages = context.pages();
-    let page = pages.find(p => p.url().includes('douyin'));
-
-    if (!page) {
-      console.log('📱 Opening Douyin...');
-      if (pages.length > 0) {
-        page = pages[0];
-        await page.goto(CONFIG.DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      } else {
-        page = await context.newPage();
-        await page.goto(CONFIG.DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      }
-      // Human-like wait for page to fully load
-      await humanWait(CONFIG.WAIT_TIMEOUT, CONFIG.WAIT_TIMEOUT + 2000);
-    } else {
+    let page;
+    
+    // Check if there's already a Douyin page open
+    const douyinPage = pages.find(p => p.url().includes('douyin.com'));
+    if (douyinPage) {
+      page = douyinPage;
       console.log('📱 Found existing Douyin tab');
+    } else {
+      // Open Douyin if not already open
+      console.log('📱 Opening Douyin...');
+      page = pages.length > 0 ? pages[0] : await context.newPage();
+      await page.goto('https://www.douyin.com', { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await humanWait(2000, 3000);
+    }
+
+    // Check current URL
+    const currentUrl = page.url();
+    console.log(`📍 Current URL: ${currentUrl}`);
+
+    // Navigate to recommendation feed by clicking the button if not already there
+    if (!currentUrl.includes('recommend')) {
+      console.log('🔍 Looking for 推荐 button...');
+      try {
+        // Wait for the navigation menu to load
+        await page.waitForSelector('a:has-text("推荐")', { timeout: 10000 });
+        
+        // Find and click the 推荐 button
+        const recommendButton = page.locator('a:has-text("推荐")').first();
+        if (await recommendButton.count() > 0) {
+          console.log('🖱️  Clicking 推荐 button...');
+          await humanHoverAndClick(page, recommendButton, { timeout: 5000 });
+          
+          // Wait for navigation
+          await humanWait(2000, 3000);
+          console.log(`✅ Navigated to: ${page.url()}`);
+        } else {
+          console.log('⚠️  推荐 button not found, trying direct navigation...');
+          await page.goto(CONFIG.DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+          await humanWait(CONFIG.WAIT_TIMEOUT, CONFIG.WAIT_TIMEOUT + 2000);
+        }
+      } catch (err) {
+        console.log(`⚠️  Could not click 推荐 button: ${err.message}`);
+        console.log('   Trying direct navigation...');
+        await page.goto(CONFIG.DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await humanWait(CONFIG.WAIT_TIMEOUT, CONFIG.WAIT_TIMEOUT + 2000);
+      }
+    } else {
+      console.log('✅ Already on recommendation feed');
       // Small pause before starting
       await humanWait(500, 1500);
     }
@@ -908,6 +1026,7 @@ async function main() {
 
         // Use keyboard navigation with human-like behavior
         await humanKeyPress(page, 'ArrowDown');
+        console.log('  ⬇️  Swiped to next video');
 
         // Wait for scroll animation and new video to load (human-like random wait)
         const scrollWait = await humanWait(

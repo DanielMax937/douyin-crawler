@@ -3,3 +3,11 @@ node_modules/
 browser-profile/
 output/
 .DS_Store
+scraper.log
+worker.log
+worker-trigger.log
+worker-reset.log
+final-test.log
+test-results.log
+test_*.log
+worker/celery-worker.pid
