@@ -11,3 +11,14 @@ final-test.log
 test-results.log
 test_*.log
 worker/celery-worker.pid
+worker/downloads/
+worker/downloads/
+worker/downloads/
+worker/downloads/
+worker/downloads/
+worker/downloads/
+worker/downloads/
+worker/downloads/
+worker/downloads/
+worker/downloads/
+worker/downloads/
