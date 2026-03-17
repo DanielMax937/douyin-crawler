@@ -20,7 +20,7 @@ if [ -f "$PID_FILE" ]; then
 fi
 
 echo "Starting Celery (worker + beat, concurrency=1 for webgemini)..."
-nohup celery -A celery_app worker --beat --loglevel=info --concurrency=1 >> "$LOG_FILE" 2>&1 &
+nohup uv run celery -A celery_app worker --beat --loglevel=info --concurrency=1 >> "$LOG_FILE" 2>&1 &
 echo $! > "$PID_FILE"
 echo "✓ Celery started (PID: $(cat $PID_FILE))"
 echo "  Log: tail -f $LOG_FILE"

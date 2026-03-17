@@ -1,0 +1,1457 @@
+nohup: celery: No such file or directory
+warning: The `tool.uv.dev-dependencies` field (used in `pyproject.toml`) is deprecated and will be removed in a future release; use `dependency-groups.dev` instead
+ 
+ -------------- celery@192.168.1.127 v5.6.2 (recovery)
+--- ***** ----- 
+-- ******* ---- macOS-26.2-arm64-arm-64bit 2026-03-16 01:21:50
+- *** --- * --- 
+- ** ---------- [config]
+- ** ---------- .> app:         douyin_worker:0x10baca1b0
+- ** ---------- .> transport:   redis://localhost:6379/0
+- ** ---------- .> results:     redis://localhost:6379/0
+- *** --- * --- .> concurrency: 1 (prefork)
+-- ******* ---- .> task events: OFF (enable -E to monitor tasks in this worker)
+--- ***** ----- 
+ -------------- [queues]
+                .> celery           exchange=celery(direct) key=celery
+                
+
+[tasks]
+  . tasks.download_pending_videos
+  . tasks.download_yesterday_videos
+  . tasks.process_pending_videos
+  . tasks.process_video_pipeline
+  . tasks.process_webgemini_summary
+  . tasks.reset_stale_tasks
+  . tasks.scrape_douyin_daily
+  . tasks.trigger_batch_now
+
+[2026-03-16 01:21:50,402: INFO/MainProcess] Connected to redis://localhost:6379/0
+[2026-03-16 01:21:50,404: INFO/MainProcess] mingle: searching for neighbors
+[2026-03-16 01:21:50,768: INFO/Beat] beat: Starting...
+[2026-03-16 01:21:51,412: INFO/MainProcess] mingle: all alone
+[2026-03-16 01:21:51,423: INFO/MainProcess] celery@192.168.1.127 ready.
+[2026-03-16 02:00:00,013: INFO/Beat] Scheduler: Sending due task scrape-douyin-daily (tasks.scrape_douyin_daily)
+[2026-03-16 02:00:00,022: INFO/MainProcess] Task tasks.scrape_douyin_daily[2baaefe1-9460-4ff5-82e9-6a222d7c1a7c] received
+[2026-03-16 02:00:00,029: INFO/ForkPoolWorker-2] Starting scrape_douyin_daily: running node douyin-scraper.js 100
+[2026-03-16 03:00:00,052: ERROR/MainProcess] Task handler raised error: TimeLimitExceeded(3600)
+Traceback (most recent call last):
+  File "/Users/caoxiaopeng/Desktop/git/douyin-crawler/worker/.venv/lib/python3.12/site-packages/billiard/pool.py", line 684, in on_hard_timeout
+    raise TimeLimitExceeded(job._timeout)
+billiard.einfo.ExceptionWithTraceback: 
+"""
+Traceback (most recent call last):
+  File "/Users/caoxiaopeng/Desktop/git/douyin-crawler/worker/.venv/lib/python3.12/site-packages/billiard/pool.py", line 684, in on_hard_timeout
+    raise TimeLimitExceeded(job._timeout)
+billiard.exceptions.TimeLimitExceeded: TimeLimitExceeded(3600,)
+"""
+[2026-03-16 03:00:00,053: ERROR/MainProcess] Hard time limit (3600s) exceeded for tasks.scrape_douyin_daily[2baaefe1-9460-4ff5-82e9-6a222d7c1a7c]
+[2026-03-16 03:00:00,157: ERROR/MainProcess] Process 'ForkPoolWorker-2' pid:28845 exited with 'signal 9 (SIGKILL)'
+[2026-03-16 05:00:00,008: INFO/Beat] Scheduler: Sending due task download-yesterday-videos-daily (tasks.download_yesterday_videos)
+[2026-03-16 05:00:00,016: INFO/MainProcess] Task tasks.download_yesterday_videos[50203bde-e260-4def-93a2-7ba2299c4724] received
+[2026-03-16 05:00:00,025: INFO/ForkPoolWorker-3] Starting download_yesterday_videos: fetching yesterday's videos without local file
+[2026-03-16 05:00:00,061: INFO/ForkPoolWorker-3] Found 0 videos to download
+[2026-03-16 05:00:00,063: INFO/ForkPoolWorker-3] Task tasks.download_yesterday_videos[50203bde-e260-4def-93a2-7ba2299c4724] succeeded in 0.04554916702909395s: {'success': 0, 'failed': 0, 'total': 0, 'timestamp': '2026-03-16T05:00:00.062542'}
+[2026-03-16 06:00:00,059: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:01:00,137: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:02:00,003: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:02:00,007: INFO/MainProcess] Task tasks.reset_stale_tasks[1bb135a7-153f-4051-a9eb-b0a83df9af5c] received
+[2026-03-16 06:02:00,009: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:02:00,023: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[1bb135a7-153f-4051-a9eb-b0a83df9af5c] succeeded in 0.014845500001683831s: {'status': 'completed', 'timestamp': '2026-03-16T06:02:00.022188'}
+[2026-03-16 06:03:00,071: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:03:00,075: INFO/MainProcess] Task tasks.reset_stale_tasks[86993e46-e219-4c1c-8da3-f8de28b51ac1] received
+[2026-03-16 06:03:00,076: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:03:00,089: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[86993e46-e219-4c1c-8da3-f8de28b51ac1] succeeded in 0.012996042030863464s: {'status': 'completed', 'timestamp': '2026-03-16T06:03:00.088073'}
+[2026-03-16 06:04:00,122: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:04:00,126: INFO/MainProcess] Task tasks.reset_stale_tasks[2351587c-286a-4fcb-ad45-a4a161c19fc1] received
+[2026-03-16 06:04:00,127: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:04:00,140: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[2351587c-286a-4fcb-ad45-a4a161c19fc1] succeeded in 0.0138575000455603s: {'status': 'completed', 'timestamp': '2026-03-16T06:04:00.139921'}
+[2026-03-16 06:05:00,057: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:05:00,061: INFO/MainProcess] Task tasks.reset_stale_tasks[f91e7b90-26bf-4de2-b7aa-2f89d20ee1ec] received
+[2026-03-16 06:05:00,062: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:05:00,073: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[f91e7b90-26bf-4de2-b7aa-2f89d20ee1ec] succeeded in 0.01155166601529345s: {'status': 'completed', 'timestamp': '2026-03-16T06:05:00.072060'}
+[2026-03-16 06:06:00,007: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:07:00,069: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:08:00,044: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:09:00,098: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:10:00,005: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:11:00,072: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:12:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:13:00,089: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:14:00,129: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:15:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:16:00,120: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:16:00,124: INFO/MainProcess] Task tasks.reset_stale_tasks[11587ee3-a681-4556-9cfa-9c4e9d0258d9] received
+[2026-03-16 06:16:00,125: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:16:00,139: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[11587ee3-a681-4556-9cfa-9c4e9d0258d9] succeeded in 0.014464291976764798s: {'status': 'completed', 'timestamp': '2026-03-16T06:16:00.138276'}
+[2026-03-16 06:17:00,063: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:17:00,067: INFO/MainProcess] Task tasks.reset_stale_tasks[4bba2ec8-50cf-4fcf-b91b-79057a935e37] received
+[2026-03-16 06:17:00,068: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:17:00,080: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[4bba2ec8-50cf-4fcf-b91b-79057a935e37] succeeded in 0.01206208299845457s: {'status': 'completed', 'timestamp': '2026-03-16T06:17:00.079019'}
+[2026-03-16 06:18:00,076: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:18:00,080: INFO/MainProcess] Task tasks.reset_stale_tasks[23971ac6-80b8-4853-b755-c6a5d6c9b30a] received
+[2026-03-16 06:18:00,081: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:18:00,094: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[23971ac6-80b8-4853-b755-c6a5d6c9b30a] succeeded in 0.013766208023298532s: {'status': 'completed', 'timestamp': '2026-03-16T06:18:00.093904'}
+[2026-03-16 06:19:00,076: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:19:00,078: INFO/MainProcess] Task tasks.reset_stale_tasks[b0402307-8995-4319-938e-c430d425873b] received
+[2026-03-16 06:19:00,079: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:19:00,094: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[b0402307-8995-4319-938e-c430d425873b] succeeded in 0.015356749994680285s: {'status': 'completed', 'timestamp': '2026-03-16T06:19:00.093629'}
+[2026-03-16 06:20:00,140: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:20:00,145: INFO/MainProcess] Task tasks.reset_stale_tasks[15cb94bd-c3bf-4ea2-87d2-21de2a663c0a] received
+[2026-03-16 06:20:00,146: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:20:00,158: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[15cb94bd-c3bf-4ea2-87d2-21de2a663c0a] succeeded in 0.012664167035836726s: {'status': 'completed', 'timestamp': '2026-03-16T06:20:00.157567'}
+[2026-03-16 06:21:00,095: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:22:00,003: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:23:00,140: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:24:00,067: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:24:00,071: INFO/MainProcess] Task tasks.reset_stale_tasks[00f5a700-f570-4b92-896d-94efe0fc9ece] received
+[2026-03-16 06:24:00,073: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:24:00,086: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[00f5a700-f570-4b92-896d-94efe0fc9ece] succeeded in 0.013450875005219132s: {'status': 'completed', 'timestamp': '2026-03-16T06:24:00.085073'}
+[2026-03-16 06:25:00,134: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:25:00,137: INFO/MainProcess] Task tasks.reset_stale_tasks[304fedfb-bb75-44d1-bacb-fcfcc1470d95] received
+[2026-03-16 06:25:00,138: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:25:00,150: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[304fedfb-bb75-44d1-bacb-fcfcc1470d95] succeeded in 0.01246983400778845s: {'status': 'completed', 'timestamp': '2026-03-16T06:25:00.149250'}
+[2026-03-16 06:26:00,109: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:26:00,112: INFO/MainProcess] Task tasks.reset_stale_tasks[567d1b79-affc-4df3-ad7d-6a89dd4fd189] received
+[2026-03-16 06:26:00,114: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:26:00,127: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[567d1b79-affc-4df3-ad7d-6a89dd4fd189] succeeded in 0.013505709008313715s: {'status': 'completed', 'timestamp': '2026-03-16T06:26:00.126171'}
+[2026-03-16 06:27:00,068: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:27:00,071: INFO/MainProcess] Task tasks.reset_stale_tasks[9da1727b-1a77-4709-8ac5-98ea488c58cc] received
+[2026-03-16 06:27:00,073: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:27:00,083: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[9da1727b-1a77-4709-8ac5-98ea488c58cc] succeeded in 0.01090595795540139s: {'status': 'completed', 'timestamp': '2026-03-16T06:27:00.082475'}
+[2026-03-16 06:28:00,108: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:29:00,073: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:30:00,110: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:31:00,103: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:32:00,128: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:33:00,010: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:33:00,014: INFO/MainProcess] Task tasks.reset_stale_tasks[385d5703-23a7-47d2-9773-2d1802a80ae1] received
+[2026-03-16 06:33:00,016: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:33:00,028: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[385d5703-23a7-47d2-9773-2d1802a80ae1] succeeded in 0.013423125026747584s: {'status': 'completed', 'timestamp': '2026-03-16T06:33:00.027337'}
+[2026-03-16 06:34:00,005: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:34:00,009: INFO/MainProcess] Task tasks.reset_stale_tasks[36eb8237-6ed3-4a11-8351-52ccea78d065] received
+[2026-03-16 06:34:00,010: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:34:00,024: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[36eb8237-6ed3-4a11-8351-52ccea78d065] succeeded in 0.014390708005521446s: {'status': 'completed', 'timestamp': '2026-03-16T06:34:00.023154'}
+[2026-03-16 06:35:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:35:00,145: INFO/MainProcess] Task tasks.reset_stale_tasks[e63b2172-2a69-4c41-a830-4cd47ee7c782] received
+[2026-03-16 06:35:00,146: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:35:00,161: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[e63b2172-2a69-4c41-a830-4cd47ee7c782] succeeded in 0.015399791998788714s: {'status': 'completed', 'timestamp': '2026-03-16T06:35:00.160726'}
+[2026-03-16 06:36:00,120: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:36:00,124: INFO/MainProcess] Task tasks.reset_stale_tasks[d5d5e6db-01d0-44f5-8658-fd88e5f549b4] received
+[2026-03-16 06:36:00,125: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:36:00,138: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[d5d5e6db-01d0-44f5-8658-fd88e5f549b4] succeeded in 0.013431500003207475s: {'status': 'completed', 'timestamp': '2026-03-16T06:36:00.137020'}
+[2026-03-16 06:37:00,091: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:38:00,014: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:39:00,067: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:40:00,140: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:41:00,113: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:42:00,008: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:42:00,011: INFO/MainProcess] Task tasks.reset_stale_tasks[7f785484-6dc9-44d3-b128-4743afc637b7] received
+[2026-03-16 06:42:00,013: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:42:00,026: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[7f785484-6dc9-44d3-b128-4743afc637b7] succeeded in 0.013772499980404973s: {'status': 'completed', 'timestamp': '2026-03-16T06:42:00.024965'}
+[2026-03-16 06:43:00,054: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:43:00,057: INFO/MainProcess] Task tasks.reset_stale_tasks[1ddc8e79-7253-4be0-8526-8aa387a6fef7] received
+[2026-03-16 06:43:00,058: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:43:00,069: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[1ddc8e79-7253-4be0-8526-8aa387a6fef7] succeeded in 0.011783750029280782s: {'status': 'completed', 'timestamp': '2026-03-16T06:43:00.068773'}
+[2026-03-16 06:44:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:44:00,136: INFO/MainProcess] Task tasks.reset_stale_tasks[581ad7b5-67f2-420c-97e6-09ff1eaf94df] received
+[2026-03-16 06:44:00,137: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:44:00,150: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[581ad7b5-67f2-420c-97e6-09ff1eaf94df] succeeded in 0.013350541004911065s: {'status': 'completed', 'timestamp': '2026-03-16T06:44:00.149154'}
+[2026-03-16 06:45:00,012: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:45:00,016: INFO/MainProcess] Task tasks.reset_stale_tasks[57861db1-9664-46f6-aa94-2605e337cdc3] received
+[2026-03-16 06:45:00,018: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:45:00,029: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[57861db1-9664-46f6-aa94-2605e337cdc3] succeeded in 0.011649125022813678s: {'status': 'completed', 'timestamp': '2026-03-16T06:45:00.027979'}
+[2026-03-16 06:46:00,063: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:46:00,065: INFO/MainProcess] Task tasks.reset_stale_tasks[71060861-e0a3-4352-b97d-e6db86b656b5] received
+[2026-03-16 06:46:00,067: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:46:00,081: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[71060861-e0a3-4352-b97d-e6db86b656b5] succeeded in 0.01452987501397729s: {'status': 'completed', 'timestamp': '2026-03-16T06:46:00.080214'}
+[2026-03-16 06:47:00,075: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:47:00,079: INFO/MainProcess] Task tasks.reset_stale_tasks[20af9242-4c2d-431f-a29d-07e882b579a8] received
+[2026-03-16 06:47:00,080: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:47:00,094: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[20af9242-4c2d-431f-a29d-07e882b579a8] succeeded in 0.014406333037186414s: {'status': 'completed', 'timestamp': '2026-03-16T06:47:00.093816'}
+[2026-03-16 06:48:00,028: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:48:00,031: INFO/MainProcess] Task tasks.reset_stale_tasks[c988045a-9346-47ed-8858-8469ef4bdee3] received
+[2026-03-16 06:48:00,032: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:48:00,043: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[c988045a-9346-47ed-8858-8469ef4bdee3] succeeded in 0.011333667032886297s: {'status': 'completed', 'timestamp': '2026-03-16T06:48:00.042535'}
+[2026-03-16 06:49:00,138: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:49:00,141: INFO/MainProcess] Task tasks.reset_stale_tasks[c84e38b7-22fa-4185-b712-b4194f38a6f8] received
+[2026-03-16 06:49:00,142: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:49:00,155: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[c84e38b7-22fa-4185-b712-b4194f38a6f8] succeeded in 0.013178833003621548s: {'status': 'completed', 'timestamp': '2026-03-16T06:49:00.154298'}
+[2026-03-16 06:50:00,021: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:50:00,025: INFO/MainProcess] Task tasks.reset_stale_tasks[9a2cefc3-f259-4df3-9771-6895b9d37872] received
+[2026-03-16 06:50:00,026: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:50:00,037: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[9a2cefc3-f259-4df3-9771-6895b9d37872] succeeded in 0.011514291982166469s: {'status': 'completed', 'timestamp': '2026-03-16T06:50:00.036156'}
+[2026-03-16 06:51:00,014: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:51:00,018: INFO/MainProcess] Task tasks.reset_stale_tasks[fe83bbd9-d7db-4303-b2c5-b38229b104ce] received
+[2026-03-16 06:51:00,019: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:51:00,030: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[fe83bbd9-d7db-4303-b2c5-b38229b104ce] succeeded in 0.011421292030718178s: {'status': 'completed', 'timestamp': '2026-03-16T06:51:00.029339'}
+[2026-03-16 06:52:00,037: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:53:00,122: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:54:00,007: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:55:00,078: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:56:00,100: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:57:00,069: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:57:00,073: INFO/MainProcess] Task tasks.reset_stale_tasks[5a9acc54-fa1a-4522-8c7f-9e6b5429216d] received
+[2026-03-16 06:57:00,075: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:57:00,088: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[5a9acc54-fa1a-4522-8c7f-9e6b5429216d] succeeded in 0.01370666699949652s: {'status': 'completed', 'timestamp': '2026-03-16T06:57:00.087050'}
+[2026-03-16 06:58:00,019: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:58:00,023: INFO/MainProcess] Task tasks.reset_stale_tasks[3318e81e-f337-4a7d-870d-caae2744473f] received
+[2026-03-16 06:58:00,024: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:58:00,036: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[3318e81e-f337-4a7d-870d-caae2744473f] succeeded in 0.012725125008728355s: {'status': 'completed', 'timestamp': '2026-03-16T06:58:00.035539'}
+[2026-03-16 06:59:00,049: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 06:59:00,053: INFO/MainProcess] Task tasks.reset_stale_tasks[85f82656-c427-40d4-b23f-07ba3f528251] received
+[2026-03-16 06:59:00,054: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 06:59:00,065: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[85f82656-c427-40d4-b23f-07ba3f528251] succeeded in 0.01138524996349588s: {'status': 'completed', 'timestamp': '2026-03-16T06:59:00.064192'}
+[2026-03-16 08:00:00,117: INFO/Beat] Scheduler: Sending due task process-videos-daily (tasks.process_pending_videos)
+[2026-03-16 12:00:00,129: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:01:00,127: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:01:00,132: INFO/MainProcess] Task tasks.reset_stale_tasks[3bfca13c-cd20-4c93-99cb-cc0cdb42c0b3] received
+[2026-03-16 12:01:00,133: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:01:00,147: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[3bfca13c-cd20-4c93-99cb-cc0cdb42c0b3] succeeded in 0.015129332954529673s: {'status': 'completed', 'timestamp': '2026-03-16T12:01:00.147192'}
+[2026-03-16 12:02:00,098: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:02:00,101: INFO/MainProcess] Task tasks.reset_stale_tasks[76c317ab-6eb9-4634-bd9e-db4d7d1fdcf8] received
+[2026-03-16 12:02:00,103: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:02:00,114: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[76c317ab-6eb9-4634-bd9e-db4d7d1fdcf8] succeeded in 0.011635457980446517s: {'status': 'completed', 'timestamp': '2026-03-16T12:02:00.113186'}
+[2026-03-16 12:03:00,113: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:03:00,117: INFO/MainProcess] Task tasks.reset_stale_tasks[18596ea3-c60e-4f11-9467-6b9751c611aa] received
+[2026-03-16 12:03:00,119: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:03:00,132: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[18596ea3-c60e-4f11-9467-6b9751c611aa] succeeded in 0.013595374999567866s: {'status': 'completed', 'timestamp': '2026-03-16T12:03:00.131059'}
+[2026-03-16 12:04:00,066: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:04:00,070: INFO/MainProcess] Task tasks.reset_stale_tasks[8596e0ea-433c-4da1-a465-041789b10cbd] received
+[2026-03-16 12:04:00,071: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:04:00,083: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[8596e0ea-433c-4da1-a465-041789b10cbd] succeeded in 0.012703291955403984s: {'status': 'completed', 'timestamp': '2026-03-16T12:04:00.082418'}
+[2026-03-16 12:05:00,021: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:06:00,072: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:07:00,088: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:08:00,080: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:09:00,130: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:10:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:11:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:11:00,134: INFO/MainProcess] Task tasks.reset_stale_tasks[66e13a47-e43b-4853-a620-b168f821c2a3] received
+[2026-03-16 12:11:00,136: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:11:00,149: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[66e13a47-e43b-4853-a620-b168f821c2a3] succeeded in 0.013602832972537726s: {'status': 'completed', 'timestamp': '2026-03-16T12:11:00.148178'}
+[2026-03-16 12:12:00,080: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:12:00,084: INFO/MainProcess] Task tasks.reset_stale_tasks[d4eb600b-f994-4b88-a0d4-e7225674e2a1] received
+[2026-03-16 12:12:00,086: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:12:00,098: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[d4eb600b-f994-4b88-a0d4-e7225674e2a1] succeeded in 0.013407666003331542s: {'status': 'completed', 'timestamp': '2026-03-16T12:12:00.097643'}
+[2026-03-16 12:13:00,040: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:13:00,044: INFO/MainProcess] Task tasks.reset_stale_tasks[bb0c03a2-ca20-422b-aba7-688d8d8af157] received
+[2026-03-16 12:13:00,045: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:13:00,059: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[bb0c03a2-ca20-422b-aba7-688d8d8af157] succeeded in 0.014125625020824373s: {'status': 'completed', 'timestamp': '2026-03-16T12:13:00.058083'}
+[2026-03-16 12:14:00,122: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:14:00,126: INFO/MainProcess] Task tasks.reset_stale_tasks[3d485d43-b27c-494c-8020-236fcf86fe2e] received
+[2026-03-16 12:14:00,127: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:14:00,139: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[3d485d43-b27c-494c-8020-236fcf86fe2e] succeeded in 0.012699624989181757s: {'status': 'completed', 'timestamp': '2026-03-16T12:14:00.138311'}
+[2026-03-16 12:15:00,070: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:16:00,075: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:17:00,127: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:18:00,140: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:19:00,077: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:19:00,080: INFO/MainProcess] Task tasks.reset_stale_tasks[154034bd-7b37-4698-a72d-ffd437623877] received
+[2026-03-16 12:19:00,082: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:19:00,093: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[154034bd-7b37-4698-a72d-ffd437623877] succeeded in 0.01225670799612999s: {'status': 'completed', 'timestamp': '2026-03-16T12:19:00.092952'}
+[2026-03-16 12:20:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:20:00,144: INFO/MainProcess] Task tasks.reset_stale_tasks[832c5bff-6c17-4228-905b-b10f1d1df7a5] received
+[2026-03-16 12:20:00,145: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:20:00,158: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[832c5bff-6c17-4228-905b-b10f1d1df7a5] succeeded in 0.013723874988500029s: {'status': 'completed', 'timestamp': '2026-03-16T12:20:00.157521'}
+[2026-03-16 12:21:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:21:00,144: INFO/MainProcess] Task tasks.reset_stale_tasks[1e5dfe04-1269-425b-9eee-f8b310ba7157] received
+[2026-03-16 12:21:00,145: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:21:00,158: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[1e5dfe04-1269-425b-9eee-f8b310ba7157] succeeded in 0.013361334044020623s: {'status': 'completed', 'timestamp': '2026-03-16T12:21:00.157277'}
+[2026-03-16 12:22:00,101: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:22:00,106: INFO/MainProcess] Task tasks.reset_stale_tasks[f159fe4d-b820-4423-a931-c0a74248c9c2] received
+[2026-03-16 12:22:00,107: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:22:00,121: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[f159fe4d-b820-4423-a931-c0a74248c9c2] succeeded in 0.01491470797918737s: {'status': 'completed', 'timestamp': '2026-03-16T12:22:00.120652'}
+[2026-03-16 12:23:00,134: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:23:00,138: INFO/MainProcess] Task tasks.reset_stale_tasks[80e7c4c0-68a5-4a29-a5d9-dfd32215d875] received
+[2026-03-16 12:23:00,140: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:23:00,151: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[80e7c4c0-68a5-4a29-a5d9-dfd32215d875] succeeded in 0.012150957947596908s: {'status': 'completed', 'timestamp': '2026-03-16T12:23:00.150381'}
+[2026-03-16 12:24:00,120: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:24:00,124: INFO/MainProcess] Task tasks.reset_stale_tasks[0e2f716f-7775-4c2f-9532-c41e09380aee] received
+[2026-03-16 12:24:00,126: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:24:00,139: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[0e2f716f-7775-4c2f-9532-c41e09380aee] succeeded in 0.013661874982062727s: {'status': 'completed', 'timestamp': '2026-03-16T12:24:00.137771'}
+[2026-03-16 12:25:00,115: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:25:00,119: INFO/MainProcess] Task tasks.reset_stale_tasks[22e97f4a-9d4e-425b-adcd-ba3383cacc0e] received
+[2026-03-16 12:25:00,121: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:25:00,133: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[22e97f4a-9d4e-425b-adcd-ba3383cacc0e] succeeded in 0.012470124987885356s: {'status': 'completed', 'timestamp': '2026-03-16T12:25:00.131837'}
+[2026-03-16 12:26:00,108: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:26:00,112: INFO/MainProcess] Task tasks.reset_stale_tasks[6a799a6a-1642-4aa5-941d-21bb909c474a] received
+[2026-03-16 12:26:00,113: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:26:00,125: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[6a799a6a-1642-4aa5-941d-21bb909c474a] succeeded in 0.012116875033825636s: {'status': 'completed', 'timestamp': '2026-03-16T12:26:00.124220'}
+[2026-03-16 12:27:00,021: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:27:00,024: INFO/MainProcess] Task tasks.reset_stale_tasks[9d56af1b-d95e-4415-a916-8a52110f4169] received
+[2026-03-16 12:27:00,026: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:27:00,037: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[9d56af1b-d95e-4415-a916-8a52110f4169] succeeded in 0.01237670803675428s: {'status': 'completed', 'timestamp': '2026-03-16T12:27:00.036641'}
+[2026-03-16 12:28:00,118: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:28:00,122: INFO/MainProcess] Task tasks.reset_stale_tasks[ec5da43a-7fdc-4dfc-b758-2e98282139db] received
+[2026-03-16 12:28:00,123: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:28:00,135: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[ec5da43a-7fdc-4dfc-b758-2e98282139db] succeeded in 0.012076959013938904s: {'status': 'completed', 'timestamp': '2026-03-16T12:28:00.133946'}
+[2026-03-16 12:29:00,138: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:30:00,038: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:31:00,039: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:32:00,098: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:33:00,138: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:34:00,067: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:34:00,071: INFO/MainProcess] Task tasks.reset_stale_tasks[3fbb5396-4010-4aae-a17a-0e1fa3d582d7] received
+[2026-03-16 12:34:00,073: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:34:00,086: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[3fbb5396-4010-4aae-a17a-0e1fa3d582d7] succeeded in 0.014504541002679616s: {'status': 'completed', 'timestamp': '2026-03-16T12:34:00.085473'}
+[2026-03-16 12:35:00,109: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:35:00,113: INFO/MainProcess] Task tasks.reset_stale_tasks[8e4750d6-d82b-4e9a-b1c2-b1d4ce8a9d98] received
+[2026-03-16 12:35:00,114: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:35:00,125: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[8e4750d6-d82b-4e9a-b1c2-b1d4ce8a9d98] succeeded in 0.01189220801461488s: {'status': 'completed', 'timestamp': '2026-03-16T12:35:00.124558'}
+[2026-03-16 12:36:00,117: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:36:00,121: INFO/MainProcess] Task tasks.reset_stale_tasks[fe97520a-6935-4aa8-ab3d-20a146da823a] received
+[2026-03-16 12:36:00,122: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:36:00,135: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[fe97520a-6935-4aa8-ab3d-20a146da823a] succeeded in 0.013257209036964923s: {'status': 'completed', 'timestamp': '2026-03-16T12:36:00.134529'}
+[2026-03-16 12:37:00,110: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:37:00,112: INFO/MainProcess] Task tasks.reset_stale_tasks[cad3abcc-84df-4564-adf1-5a5a2075648f] received
+[2026-03-16 12:37:00,114: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:37:00,127: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[cad3abcc-84df-4564-adf1-5a5a2075648f] succeeded in 0.014107875002082437s: {'status': 'completed', 'timestamp': '2026-03-16T12:37:00.126630'}
+[2026-03-16 12:38:00,136: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:38:00,141: INFO/MainProcess] Task tasks.reset_stale_tasks[710f474c-a9f0-44df-8544-af06861002ea] received
+[2026-03-16 12:38:00,143: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:38:00,154: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[710f474c-a9f0-44df-8544-af06861002ea] succeeded in 0.012128084024880081s: {'status': 'completed', 'timestamp': '2026-03-16T12:38:00.153274'}
+[2026-03-16 12:39:00,008: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:40:00,010: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:41:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:42:00,076: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:43:00,109: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:44:00,017: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:44:00,021: INFO/MainProcess] Task tasks.reset_stale_tasks[65ec24a6-a57c-45f9-bc7f-7f9005dafda5] received
+[2026-03-16 12:44:00,023: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:44:00,035: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[65ec24a6-a57c-45f9-bc7f-7f9005dafda5] succeeded in 0.01274666702374816s: {'status': 'completed', 'timestamp': '2026-03-16T12:44:00.034201'}
+[2026-03-16 12:45:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:45:00,135: INFO/MainProcess] Task tasks.reset_stale_tasks[21819557-8d73-4d01-9c6c-7fcb8a6ba225] received
+[2026-03-16 12:45:00,136: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:45:00,151: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[21819557-8d73-4d01-9c6c-7fcb8a6ba225] succeeded in 0.015436332963872701s: {'status': 'completed', 'timestamp': '2026-03-16T12:45:00.150434'}
+[2026-03-16 12:46:00,011: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:46:00,014: INFO/MainProcess] Task tasks.reset_stale_tasks[05d18a5f-70b4-440c-a567-60e48e538afe] received
+[2026-03-16 12:46:00,017: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:46:00,029: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[05d18a5f-70b4-440c-a567-60e48e538afe] succeeded in 0.01314441702561453s: {'status': 'completed', 'timestamp': '2026-03-16T12:46:00.027734'}
+[2026-03-16 12:47:00,072: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:47:00,076: INFO/MainProcess] Task tasks.reset_stale_tasks[6c493bd0-6080-4e42-a9b0-7b41ebc42242] received
+[2026-03-16 12:47:00,077: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:47:00,091: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[6c493bd0-6080-4e42-a9b0-7b41ebc42242] succeeded in 0.014272250002250075s: {'status': 'completed', 'timestamp': '2026-03-16T12:47:00.090472'}
+[2026-03-16 12:48:00,125: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:48:00,128: INFO/MainProcess] Task tasks.reset_stale_tasks[cdc412cf-9911-45e9-908e-19c157ff639e] received
+[2026-03-16 12:48:00,129: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:48:00,142: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[cdc412cf-9911-45e9-908e-19c157ff639e] succeeded in 0.0134139169822447s: {'status': 'completed', 'timestamp': '2026-03-16T12:48:00.141540'}
+[2026-03-16 12:49:00,045: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:49:00,049: INFO/MainProcess] Task tasks.reset_stale_tasks[173f8161-6eb2-423e-8040-01f0c2dd3b32] received
+[2026-03-16 12:49:00,050: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:49:00,061: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[173f8161-6eb2-423e-8040-01f0c2dd3b32] succeeded in 0.011871709022670984s: {'status': 'completed', 'timestamp': '2026-03-16T12:49:00.060547'}
+[2026-03-16 12:50:00,127: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:51:00,135: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:51:00,139: INFO/MainProcess] Task tasks.reset_stale_tasks[654dedd7-fdd0-4906-af09-814bbf51e193] received
+[2026-03-16 12:51:00,141: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:51:00,153: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[654dedd7-fdd0-4906-af09-814bbf51e193] succeeded in 0.012321916001383215s: {'status': 'completed', 'timestamp': '2026-03-16T12:51:00.152139'}
+[2026-03-16 12:52:00,013: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:52:00,018: INFO/MainProcess] Task tasks.reset_stale_tasks[ff3a3842-af25-492e-ab6d-d7c2fa15f940] received
+[2026-03-16 12:52:00,020: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:52:00,032: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[ff3a3842-af25-492e-ab6d-d7c2fa15f940] succeeded in 0.01358420797623694s: {'status': 'completed', 'timestamp': '2026-03-16T12:52:00.031509'}
+[2026-03-16 12:53:00,125: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:53:00,129: INFO/MainProcess] Task tasks.reset_stale_tasks[2566ef53-26ca-46eb-b8d0-2be1b70d6542] received
+[2026-03-16 12:53:00,130: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:53:00,141: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[2566ef53-26ca-46eb-b8d0-2be1b70d6542] succeeded in 0.011841624975204468s: {'status': 'completed', 'timestamp': '2026-03-16T12:53:00.140514'}
+[2026-03-16 12:54:00,139: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:54:00,142: INFO/MainProcess] Task tasks.reset_stale_tasks[33d6f236-8192-4afb-a34c-1bc281dee54c] received
+[2026-03-16 12:54:00,144: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:54:00,156: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[33d6f236-8192-4afb-a34c-1bc281dee54c] succeeded in 0.012616624997463077s: {'status': 'completed', 'timestamp': '2026-03-16T12:54:00.155148'}
+[2026-03-16 12:55:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:55:00,136: INFO/MainProcess] Task tasks.reset_stale_tasks[b57cd367-2903-4a98-a86e-121f5a3eec7f] received
+[2026-03-16 12:55:00,137: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 12:55:00,150: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[b57cd367-2903-4a98-a86e-121f5a3eec7f] succeeded in 0.013652041961904615s: {'status': 'completed', 'timestamp': '2026-03-16T12:55:00.149322'}
+[2026-03-16 12:56:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:57:00,082: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:58:00,061: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 12:59:00,140: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:00:00,113: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:01:00,136: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:01:00,141: INFO/MainProcess] Task tasks.reset_stale_tasks[2e568826-ff72-4d5c-954b-741cd26e3684] received
+[2026-03-16 18:01:00,147: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:01:00,160: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[2e568826-ff72-4d5c-954b-741cd26e3684] succeeded in 0.015625375031959265s: {'status': 'completed', 'timestamp': '2026-03-16T18:01:00.158340'}
+[2026-03-16 18:02:00,123: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:02:00,127: INFO/MainProcess] Task tasks.reset_stale_tasks[20d84e56-5922-411c-a878-cc86f0f7bc8d] received
+[2026-03-16 18:02:00,128: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:02:00,142: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[20d84e56-5922-411c-a878-cc86f0f7bc8d] succeeded in 0.014275000023189932s: {'status': 'completed', 'timestamp': '2026-03-16T18:02:00.141173'}
+[2026-03-16 18:03:00,048: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:03:00,051: INFO/MainProcess] Task tasks.reset_stale_tasks[59652af2-3fb7-4cc7-ba23-463370ab4ecd] received
+[2026-03-16 18:03:00,052: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:03:00,064: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[59652af2-3fb7-4cc7-ba23-463370ab4ecd] succeeded in 0.012144708016421646s: {'status': 'completed', 'timestamp': '2026-03-16T18:03:00.063317'}
+[2026-03-16 18:04:00,129: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:04:00,133: INFO/MainProcess] Task tasks.reset_stale_tasks[36e8dcb9-a4bb-4fa5-8938-e1a17bb1c920] received
+[2026-03-16 18:04:00,134: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:04:00,145: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[36e8dcb9-a4bb-4fa5-8938-e1a17bb1c920] succeeded in 0.011692916974425316s: {'status': 'completed', 'timestamp': '2026-03-16T18:04:00.144381'}
+[2026-03-16 18:05:00,111: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:05:00,114: INFO/MainProcess] Task tasks.reset_stale_tasks[f89f8113-71c0-4369-bf86-feda14761649] received
+[2026-03-16 18:05:00,116: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:05:00,127: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[f89f8113-71c0-4369-bf86-feda14761649] succeeded in 0.012097541010007262s: {'status': 'completed', 'timestamp': '2026-03-16T18:05:00.126158'}
+[2026-03-16 18:06:00,137: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:07:00,136: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:08:00,091: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:09:00,010: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:10:00,009: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:10:00,012: INFO/MainProcess] Task tasks.reset_stale_tasks[e5a7cc6a-ca5c-4533-b8cf-8ca644e41039] received
+[2026-03-16 18:10:00,014: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:10:00,027: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[e5a7cc6a-ca5c-4533-b8cf-8ca644e41039] succeeded in 0.014406542002689093s: {'status': 'completed', 'timestamp': '2026-03-16T18:10:00.026213'}
+[2026-03-16 18:11:00,075: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:11:00,080: INFO/MainProcess] Task tasks.reset_stale_tasks[3fc0bb4e-4129-41fa-81ba-0ad3b800bc71] received
+[2026-03-16 18:11:00,081: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:11:00,096: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[3fc0bb4e-4129-41fa-81ba-0ad3b800bc71] succeeded in 0.015496458043344319s: {'status': 'completed', 'timestamp': '2026-03-16T18:11:00.095346'}
+[2026-03-16 18:12:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:12:00,145: INFO/MainProcess] Task tasks.reset_stale_tasks[2919babf-d77c-4b5f-a3ca-a11f6df372a4] received
+[2026-03-16 18:12:00,148: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:12:00,159: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[2919babf-d77c-4b5f-a3ca-a11f6df372a4] succeeded in 0.01242287503555417s: {'status': 'completed', 'timestamp': '2026-03-16T18:12:00.158123'}
+[2026-03-16 18:13:00,139: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:13:00,142: INFO/MainProcess] Task tasks.reset_stale_tasks[3f8ab40a-f55b-40f5-b220-240b42f8f85b] received
+[2026-03-16 18:13:00,144: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:13:00,157: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[3f8ab40a-f55b-40f5-b220-240b42f8f85b] succeeded in 0.013989750004839152s: {'status': 'completed', 'timestamp': '2026-03-16T18:13:00.156608'}
+[2026-03-16 18:14:00,027: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:14:00,031: INFO/MainProcess] Task tasks.reset_stale_tasks[c6c81b43-fe33-499a-9610-9b8e8ddc8b73] received
+[2026-03-16 18:14:00,032: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:14:00,044: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[c6c81b43-fe33-499a-9610-9b8e8ddc8b73] succeeded in 0.012968374998308718s: {'status': 'completed', 'timestamp': '2026-03-16T18:14:00.044070'}
+[2026-03-16 18:15:00,107: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:15:00,112: INFO/MainProcess] Task tasks.reset_stale_tasks[e1cbe9c2-8359-4ef1-be29-3e64317d160a] received
+[2026-03-16 18:15:00,113: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:15:00,126: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[e1cbe9c2-8359-4ef1-be29-3e64317d160a] succeeded in 0.014055167033802718s: {'status': 'completed', 'timestamp': '2026-03-16T18:15:00.125840'}
+[2026-03-16 18:16:00,115: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:16:00,119: INFO/MainProcess] Task tasks.reset_stale_tasks[9c0be60f-72cd-408f-937c-f2804ba9348f] received
+[2026-03-16 18:16:00,120: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:16:00,131: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[9c0be60f-72cd-408f-937c-f2804ba9348f] succeeded in 0.010870541969779879s: {'status': 'completed', 'timestamp': '2026-03-16T18:16:00.129867'}
+[2026-03-16 18:17:00,023: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:17:00,026: INFO/MainProcess] Task tasks.reset_stale_tasks[a3350f6c-ee61-4940-9cce-bd68166039d2] received
+[2026-03-16 18:17:00,027: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:17:00,039: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[a3350f6c-ee61-4940-9cce-bd68166039d2] succeeded in 0.01217108394484967s: {'status': 'completed', 'timestamp': '2026-03-16T18:17:00.037995'}
+[2026-03-16 18:18:00,140: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:18:00,144: INFO/MainProcess] Task tasks.reset_stale_tasks[d87b5456-3720-4224-98ec-c26ed82744ab] received
+[2026-03-16 18:18:00,145: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:18:00,157: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[d87b5456-3720-4224-98ec-c26ed82744ab] succeeded in 0.01219275000039488s: {'status': 'completed', 'timestamp': '2026-03-16T18:18:00.155814'}
+[2026-03-16 18:19:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:19:00,134: INFO/MainProcess] Task tasks.reset_stale_tasks[e329efa9-a7ec-4494-9e6a-a39ba3a87afa] received
+[2026-03-16 18:19:00,136: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:19:00,148: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[e329efa9-a7ec-4494-9e6a-a39ba3a87afa] succeeded in 0.012710999988485128s: {'status': 'completed', 'timestamp': '2026-03-16T18:19:00.147141'}
+[2026-03-16 18:20:00,051: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:20:00,055: INFO/MainProcess] Task tasks.reset_stale_tasks[2368ac7e-0083-402d-9240-26e82c95fe8f] received
+[2026-03-16 18:20:00,056: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:20:00,068: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[2368ac7e-0083-402d-9240-26e82c95fe8f] succeeded in 0.012134458986110985s: {'status': 'completed', 'timestamp': '2026-03-16T18:20:00.066813'}
+[2026-03-16 18:21:00,014: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:21:00,019: INFO/MainProcess] Task tasks.reset_stale_tasks[74c7ec7d-2385-405d-8e33-76abef70d503] received
+[2026-03-16 18:21:00,021: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:21:00,033: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[74c7ec7d-2385-405d-8e33-76abef70d503] succeeded in 0.013173374987673014s: {'status': 'completed', 'timestamp': '2026-03-16T18:21:00.032195'}
+[2026-03-16 18:22:00,014: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:22:00,019: INFO/MainProcess] Task tasks.reset_stale_tasks[e18d298a-73e7-401f-b8f3-f5d9732198fc] received
+[2026-03-16 18:22:00,020: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:22:00,030: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[e18d298a-73e7-401f-b8f3-f5d9732198fc] succeeded in 0.010969458031468093s: {'status': 'completed', 'timestamp': '2026-03-16T18:22:00.029621'}
+[2026-03-16 18:23:00,030: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:23:00,033: INFO/MainProcess] Task tasks.reset_stale_tasks[b9e922a0-ea08-471f-840a-44165030c74c] received
+[2026-03-16 18:23:00,034: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:23:00,045: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[b9e922a0-ea08-471f-840a-44165030c74c] succeeded in 0.011158875015098602s: {'status': 'completed', 'timestamp': '2026-03-16T18:23:00.044184'}
+[2026-03-16 18:24:00,132: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:24:00,136: INFO/MainProcess] Task tasks.reset_stale_tasks[92d46cb8-1044-4c7d-9556-2dfaf6ec7558] received
+[2026-03-16 18:24:00,137: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:24:00,149: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[92d46cb8-1044-4c7d-9556-2dfaf6ec7558] succeeded in 0.01268716697813943s: {'status': 'completed', 'timestamp': '2026-03-16T18:24:00.148596'}
+[2026-03-16 18:25:00,094: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:25:00,097: INFO/MainProcess] Task tasks.reset_stale_tasks[1d29d777-8fa2-4eef-8e0f-ec12459ccc68] received
+[2026-03-16 18:25:00,099: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:25:00,109: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[1d29d777-8fa2-4eef-8e0f-ec12459ccc68] succeeded in 0.011364083038643003s: {'status': 'completed', 'timestamp': '2026-03-16T18:25:00.108991'}
+[2026-03-16 18:26:00,109: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:27:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:28:00,003: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:29:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:30:00,083: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:30:00,088: INFO/MainProcess] Task tasks.reset_stale_tasks[e53b20b4-e410-467c-8225-a9b26bdc4bf9] received
+[2026-03-16 18:30:00,090: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:30:00,103: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[e53b20b4-e410-467c-8225-a9b26bdc4bf9] succeeded in 0.014064082992263138s: {'status': 'completed', 'timestamp': '2026-03-16T18:30:00.102262'}
+[2026-03-16 18:31:00,037: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:31:00,041: INFO/MainProcess] Task tasks.reset_stale_tasks[815c6557-df54-43a8-a2f9-6faf89dbfc6b] received
+[2026-03-16 18:31:00,043: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:31:00,054: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[815c6557-df54-43a8-a2f9-6faf89dbfc6b] succeeded in 0.011785708018578589s: {'status': 'completed', 'timestamp': '2026-03-16T18:31:00.053112'}
+[2026-03-16 18:32:00,064: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:32:00,068: INFO/MainProcess] Task tasks.reset_stale_tasks[16df5eb6-9a91-4b81-9055-51309c687299] received
+[2026-03-16 18:32:00,070: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:32:00,082: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[16df5eb6-9a91-4b81-9055-51309c687299] succeeded in 0.0132115000160411s: {'status': 'completed', 'timestamp': '2026-03-16T18:32:00.081809'}
+[2026-03-16 18:33:00,051: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:33:00,055: INFO/MainProcess] Task tasks.reset_stale_tasks[df222c25-a7d0-4c49-81d8-da824335ef07] received
+[2026-03-16 18:33:00,056: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:33:00,068: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[df222c25-a7d0-4c49-81d8-da824335ef07] succeeded in 0.013021457998547703s: {'status': 'completed', 'timestamp': '2026-03-16T18:33:00.067751'}
+[2026-03-16 18:34:00,103: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:34:00,106: INFO/MainProcess] Task tasks.reset_stale_tasks[06bc5422-338a-4618-b9e7-0382cfcc3097] received
+[2026-03-16 18:34:00,107: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:34:00,118: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[06bc5422-338a-4618-b9e7-0382cfcc3097] succeeded in 0.011838459002319723s: {'status': 'completed', 'timestamp': '2026-03-16T18:34:00.117526'}
+[2026-03-16 18:35:00,043: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:36:00,098: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:37:00,104: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:38:00,120: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:39:00,103: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:40:00,042: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:40:00,046: INFO/MainProcess] Task tasks.reset_stale_tasks[2de489c2-0940-43d0-a3c2-6a76037949ea] received
+[2026-03-16 18:40:00,047: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:40:00,060: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[2de489c2-0940-43d0-a3c2-6a76037949ea] succeeded in 0.013464624993503094s: {'status': 'completed', 'timestamp': '2026-03-16T18:40:00.059383'}
+[2026-03-16 18:41:00,030: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:41:00,034: INFO/MainProcess] Task tasks.reset_stale_tasks[4cc989a6-2723-4ae6-a740-ef3f63b6d0a7] received
+[2026-03-16 18:41:00,035: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:41:00,049: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[4cc989a6-2723-4ae6-a740-ef3f63b6d0a7] succeeded in 0.013818749983329326s: {'status': 'completed', 'timestamp': '2026-03-16T18:41:00.048319'}
+[2026-03-16 18:42:00,087: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:42:00,089: INFO/MainProcess] Task tasks.reset_stale_tasks[dc91ea58-a221-4c94-b953-cc417a8377a8] received
+[2026-03-16 18:42:00,091: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:42:00,105: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[dc91ea58-a221-4c94-b953-cc417a8377a8] succeeded in 0.014815333997830749s: {'status': 'completed', 'timestamp': '2026-03-16T18:42:00.104456'}
+[2026-03-16 18:43:00,091: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:43:00,095: INFO/MainProcess] Task tasks.reset_stale_tasks[e66b833b-b1a0-4a8d-b1d3-cdd98f237c0a] received
+[2026-03-16 18:43:00,096: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:43:00,108: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[e66b833b-b1a0-4a8d-b1d3-cdd98f237c0a] succeeded in 0.01278291700873524s: {'status': 'completed', 'timestamp': '2026-03-16T18:43:00.107748'}
+[2026-03-16 18:44:00,133: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:44:00,138: INFO/MainProcess] Task tasks.reset_stale_tasks[e96bcdf2-716f-4d75-9cb5-ee4b84f8f0cc] received
+[2026-03-16 18:44:00,140: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:44:00,151: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[e96bcdf2-716f-4d75-9cb5-ee4b84f8f0cc] succeeded in 0.012465750041883439s: {'status': 'completed', 'timestamp': '2026-03-16T18:44:00.150639'}
+[2026-03-16 18:45:00,108: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:46:00,129: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:47:00,126: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:48:00,122: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:49:00,091: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:50:00,121: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:50:00,124: INFO/MainProcess] Task tasks.reset_stale_tasks[f39b54c0-3214-4fd8-9926-eed7bf63481b] received
+[2026-03-16 18:50:00,126: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:50:00,136: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[f39b54c0-3214-4fd8-9926-eed7bf63481b] succeeded in 0.011374124966096133s: {'status': 'completed', 'timestamp': '2026-03-16T18:50:00.135840'}
+[2026-03-16 18:51:00,067: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:52:00,126: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:53:00,026: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:54:00,111: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:55:00,011: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:55:00,015: INFO/MainProcess] Task tasks.reset_stale_tasks[687ffa09-0afe-466f-b877-ac87bc4c3bd3] received
+[2026-03-16 18:55:00,017: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:55:00,029: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[687ffa09-0afe-466f-b877-ac87bc4c3bd3] succeeded in 0.012781874975189567s: {'status': 'completed', 'timestamp': '2026-03-16T18:55:00.028169'}
+[2026-03-16 18:56:00,116: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:56:00,120: INFO/MainProcess] Task tasks.reset_stale_tasks[eb89ad5d-4566-4eed-99f0-54291a7c9d38] received
+[2026-03-16 18:56:00,121: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:56:00,135: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[eb89ad5d-4566-4eed-99f0-54291a7c9d38] succeeded in 0.01456333399983123s: {'status': 'completed', 'timestamp': '2026-03-16T18:56:00.134784'}
+[2026-03-16 18:57:00,112: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:57:00,116: INFO/MainProcess] Task tasks.reset_stale_tasks[baf79fb9-47c0-4402-8802-7df65a61cb56] received
+[2026-03-16 18:57:00,117: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:57:00,130: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[baf79fb9-47c0-4402-8802-7df65a61cb56] succeeded in 0.013989625032991171s: {'status': 'completed', 'timestamp': '2026-03-16T18:57:00.129979'}
+[2026-03-16 18:58:00,106: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:58:00,110: INFO/MainProcess] Task tasks.reset_stale_tasks[8c0e479c-081d-4b36-b5ef-1cefdf7cd330] received
+[2026-03-16 18:58:00,112: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:58:00,122: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[8c0e479c-081d-4b36-b5ef-1cefdf7cd330] succeeded in 0.011119792005047202s: {'status': 'completed', 'timestamp': '2026-03-16T18:58:00.121555'}
+[2026-03-16 18:59:00,098: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-16 18:59:00,101: INFO/MainProcess] Task tasks.reset_stale_tasks[6c2542d9-c567-4c53-916b-4fd334c7a895] received
+[2026-03-16 18:59:00,103: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-16 18:59:00,113: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[6c2542d9-c567-4c53-916b-4fd334c7a895] succeeded in 0.010882542002946138s: {'status': 'completed', 'timestamp': '2026-03-16T18:59:00.112388'}
+[2026-03-17 00:00:00,077: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:00:00,087: INFO/MainProcess] Task tasks.reset_stale_tasks[a77bc185-a3b5-412b-a3bb-7306adbe8edc] received
+[2026-03-17 00:00:00,092: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:00:00,110: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[a77bc185-a3b5-412b-a3bb-7306adbe8edc] succeeded in 0.020248332992196083s: {'status': 'completed', 'timestamp': '2026-03-17T00:00:00.109200'}
+[2026-03-17 00:01:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:02:00,120: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:03:00,110: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:04:00,078: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:05:00,121: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:06:00,057: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:06:00,061: INFO/MainProcess] Task tasks.reset_stale_tasks[b94040c5-27da-4f8a-9cb7-34ae304f7e1a] received
+[2026-03-17 00:06:00,062: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:06:00,074: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[b94040c5-27da-4f8a-9cb7-34ae304f7e1a] succeeded in 0.012274625012651086s: {'status': 'completed', 'timestamp': '2026-03-17T00:06:00.073128'}
+[2026-03-17 00:07:00,014: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:07:00,018: INFO/MainProcess] Task tasks.reset_stale_tasks[d22710fd-1c22-4ebc-ae7d-0265e167883e] received
+[2026-03-17 00:07:00,020: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:07:00,032: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[d22710fd-1c22-4ebc-ae7d-0265e167883e] succeeded in 0.012570374994538724s: {'status': 'completed', 'timestamp': '2026-03-17T00:07:00.031556'}
+[2026-03-17 00:08:00,073: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:08:00,077: INFO/MainProcess] Task tasks.reset_stale_tasks[5e40107c-37ed-4405-83b7-10c296e97b03] received
+[2026-03-17 00:08:00,078: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:08:00,091: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[5e40107c-37ed-4405-83b7-10c296e97b03] succeeded in 0.01388758298708126s: {'status': 'completed', 'timestamp': '2026-03-17T00:08:00.090999'}
+[2026-03-17 00:09:00,132: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:09:00,136: INFO/MainProcess] Task tasks.reset_stale_tasks[a910e54a-a6e1-4339-beda-e85adb250f6f] received
+[2026-03-17 00:09:00,138: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:09:00,150: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[a910e54a-a6e1-4339-beda-e85adb250f6f] succeeded in 0.012690290983300656s: {'status': 'completed', 'timestamp': '2026-03-17T00:09:00.148886'}
+[2026-03-17 00:10:00,124: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:10:00,128: INFO/MainProcess] Task tasks.reset_stale_tasks[1a7bfe8c-b310-4fb1-87b8-a96589e0bd72] received
+[2026-03-17 00:10:00,129: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:10:00,141: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[1a7bfe8c-b310-4fb1-87b8-a96589e0bd72] succeeded in 0.012207666994072497s: {'status': 'completed', 'timestamp': '2026-03-17T00:10:00.140088'}
+[2026-03-17 00:11:00,028: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:12:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:13:00,115: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:14:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:15:00,022: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:15:00,025: INFO/MainProcess] Task tasks.reset_stale_tasks[e34971e6-3844-4bde-92f0-1cfadaf98967] received
+[2026-03-17 00:15:00,027: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:15:00,037: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[e34971e6-3844-4bde-92f0-1cfadaf98967] succeeded in 0.011086833954323083s: {'status': 'completed', 'timestamp': '2026-03-17T00:15:00.036428'}
+[2026-03-17 00:16:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:16:00,135: INFO/MainProcess] Task tasks.reset_stale_tasks[64863322-b32b-4b87-b95a-c1f85a2d8a11] received
+[2026-03-17 00:16:00,137: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:16:00,150: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[64863322-b32b-4b87-b95a-c1f85a2d8a11] succeeded in 0.014084291993640363s: {'status': 'completed', 'timestamp': '2026-03-17T00:16:00.149789'}
+[2026-03-17 00:17:00,128: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:17:00,133: INFO/MainProcess] Task tasks.reset_stale_tasks[386a89a1-5dd5-4d2d-b7d1-ff0770a67caf] received
+[2026-03-17 00:17:00,135: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:17:00,147: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[386a89a1-5dd5-4d2d-b7d1-ff0770a67caf] succeeded in 0.012865792028605938s: {'status': 'completed', 'timestamp': '2026-03-17T00:17:00.146061'}
+[2026-03-17 00:18:00,109: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:18:00,113: INFO/MainProcess] Task tasks.reset_stale_tasks[c5567708-0563-4e01-a894-ed9afe48ab2a] received
+[2026-03-17 00:18:00,115: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:18:00,129: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[c5567708-0563-4e01-a894-ed9afe48ab2a] succeeded in 0.014954834012314677s: {'status': 'completed', 'timestamp': '2026-03-17T00:18:00.128657'}
+[2026-03-17 00:19:00,066: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:19:00,070: INFO/MainProcess] Task tasks.reset_stale_tasks[fefd8810-c042-4349-8137-5f83b8da01a7] received
+[2026-03-17 00:19:00,072: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:19:00,085: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[fefd8810-c042-4349-8137-5f83b8da01a7] succeeded in 0.01376008300576359s: {'status': 'completed', 'timestamp': '2026-03-17T00:19:00.083883'}
+[2026-03-17 00:20:00,050: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:21:00,110: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:22:00,110: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:23:00,051: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:24:00,110: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:25:00,112: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:25:00,116: INFO/MainProcess] Task tasks.reset_stale_tasks[c2308f80-11a4-4e8b-89ae-56e34aa2be16] received
+[2026-03-17 00:25:00,117: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:25:00,129: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[c2308f80-11a4-4e8b-89ae-56e34aa2be16] succeeded in 0.01239354204153642s: {'status': 'completed', 'timestamp': '2026-03-17T00:25:00.128390'}
+[2026-03-17 00:26:00,021: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:26:00,024: INFO/MainProcess] Task tasks.reset_stale_tasks[badb97c5-8dfd-43e1-aef0-e405e1e49f03] received
+[2026-03-17 00:26:00,025: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:26:00,036: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[badb97c5-8dfd-43e1-aef0-e405e1e49f03] succeeded in 0.011177459033206105s: {'status': 'completed', 'timestamp': '2026-03-17T00:26:00.034971'}
+[2026-03-17 00:27:00,129: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:27:00,132: INFO/MainProcess] Task tasks.reset_stale_tasks[009f9f79-2497-4f92-b91c-a7f7609a9630] received
+[2026-03-17 00:27:00,134: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:27:00,145: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[009f9f79-2497-4f92-b91c-a7f7609a9630] succeeded in 0.01203799998620525s: {'status': 'completed', 'timestamp': '2026-03-17T00:27:00.144424'}
+[2026-03-17 00:28:00,133: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:28:00,137: INFO/MainProcess] Task tasks.reset_stale_tasks[7c4c7a8d-aec4-4b05-95ad-a141edc20a56] received
+[2026-03-17 00:28:00,138: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:28:00,150: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[7c4c7a8d-aec4-4b05-95ad-a141edc20a56] succeeded in 0.012225583021063358s: {'status': 'completed', 'timestamp': '2026-03-17T00:28:00.149078'}
+[2026-03-17 00:29:00,036: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:29:00,039: INFO/MainProcess] Task tasks.reset_stale_tasks[b5f7061f-c9ac-4d93-a3c4-70e262a4e7bb] received
+[2026-03-17 00:29:00,041: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:29:00,051: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[b5f7061f-c9ac-4d93-a3c4-70e262a4e7bb] succeeded in 0.011162374983541667s: {'status': 'completed', 'timestamp': '2026-03-17T00:29:00.050593'}
+[2026-03-17 00:30:00,029: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:31:00,084: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:32:00,073: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:33:00,121: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:34:00,017: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:35:00,022: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:35:00,025: INFO/MainProcess] Task tasks.reset_stale_tasks[856f7e5c-1552-4e32-9978-bf17769ff53c] received
+[2026-03-17 00:35:00,026: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:35:00,037: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[856f7e5c-1552-4e32-9978-bf17769ff53c] succeeded in 0.011611041030846536s: {'status': 'completed', 'timestamp': '2026-03-17T00:35:00.036433'}
+[2026-03-17 00:36:00,079: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:36:00,083: INFO/MainProcess] Task tasks.reset_stale_tasks[b26e3e2d-5f36-444c-a380-05eab51e7918] received
+[2026-03-17 00:36:00,085: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:36:00,097: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[b26e3e2d-5f36-444c-a380-05eab51e7918] succeeded in 0.012824000034015626s: {'status': 'completed', 'timestamp': '2026-03-17T00:36:00.096251'}
+[2026-03-17 00:37:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:37:00,135: INFO/MainProcess] Task tasks.reset_stale_tasks[f9e60538-aab4-42c9-a72c-09f02d5e94e7] received
+[2026-03-17 00:37:00,137: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:37:00,148: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[f9e60538-aab4-42c9-a72c-09f02d5e94e7] succeeded in 0.01131812494713813s: {'status': 'completed', 'timestamp': '2026-03-17T00:37:00.147021'}
+[2026-03-17 00:38:00,132: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:38:00,135: INFO/MainProcess] Task tasks.reset_stale_tasks[c6177024-f3d3-4261-b6fd-7ced28bb99c9] received
+[2026-03-17 00:38:00,137: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:38:00,146: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[c6177024-f3d3-4261-b6fd-7ced28bb99c9] succeeded in 0.010000665963161737s: {'status': 'completed', 'timestamp': '2026-03-17T00:38:00.145409'}
+[2026-03-17 00:39:00,124: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:39:00,127: INFO/MainProcess] Task tasks.reset_stale_tasks[fe4631cb-e14e-44e5-9c2a-2d8302e8a949] received
+[2026-03-17 00:39:00,129: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:39:00,141: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[fe4631cb-e14e-44e5-9c2a-2d8302e8a949] succeeded in 0.012677749968133867s: {'status': 'completed', 'timestamp': '2026-03-17T00:39:00.139782'}
+[2026-03-17 00:40:00,095: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:40:00,098: INFO/MainProcess] Task tasks.reset_stale_tasks[ffdbbe9a-f670-47a1-a3fd-00e958cba08b] received
+[2026-03-17 00:40:00,099: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:40:00,111: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[ffdbbe9a-f670-47a1-a3fd-00e958cba08b] succeeded in 0.012458082986995578s: {'status': 'completed', 'timestamp': '2026-03-17T00:40:00.110531'}
+[2026-03-17 00:41:00,059: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:42:00,117: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:43:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:44:00,125: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:45:00,118: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:46:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:46:00,145: INFO/MainProcess] Task tasks.reset_stale_tasks[14c8def6-b351-4987-a444-7a094a10d0b6] received
+[2026-03-17 00:46:00,146: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:46:00,157: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[14c8def6-b351-4987-a444-7a094a10d0b6] succeeded in 0.011710125021636486s: {'status': 'completed', 'timestamp': '2026-03-17T00:46:00.156631'}
+[2026-03-17 00:47:00,118: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:47:00,122: INFO/MainProcess] Task tasks.reset_stale_tasks[00fc3ba9-eb78-4bbb-b030-8a8300ff8e9d] received
+[2026-03-17 00:47:00,124: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:47:00,139: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[00fc3ba9-eb78-4bbb-b030-8a8300ff8e9d] succeeded in 0.015687874983996153s: {'status': 'completed', 'timestamp': '2026-03-17T00:47:00.138165'}
+[2026-03-17 00:48:00,127: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:48:00,131: INFO/MainProcess] Task tasks.reset_stale_tasks[3d7a2361-a1e4-40c9-9d63-c126d1b394a9] received
+[2026-03-17 00:48:00,132: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:48:00,144: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[3d7a2361-a1e4-40c9-9d63-c126d1b394a9] succeeded in 0.012586250028107315s: {'status': 'completed', 'timestamp': '2026-03-17T00:48:00.143587'}
+[2026-03-17 00:49:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:49:00,002: INFO/MainProcess] Task tasks.reset_stale_tasks[e506f1cf-2859-4b10-998f-c14dbed02bc5] received
+[2026-03-17 00:49:00,003: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:49:00,017: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[e506f1cf-2859-4b10-998f-c14dbed02bc5] succeeded in 0.014938542037270963s: {'status': 'completed', 'timestamp': '2026-03-17T00:49:00.016868'}
+[2026-03-17 00:50:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:50:00,145: INFO/MainProcess] Task tasks.reset_stale_tasks[4b022458-2656-42de-ac4c-e39f859759b3] received
+[2026-03-17 00:50:00,146: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:50:00,157: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[4b022458-2656-42de-ac4c-e39f859759b3] succeeded in 0.01165816601132974s: {'status': 'completed', 'timestamp': '2026-03-17T00:50:00.156605'}
+[2026-03-17 00:51:00,102: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:52:00,092: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:53:00,140: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:54:00,002: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:55:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:55:00,145: INFO/MainProcess] Task tasks.reset_stale_tasks[f66c3934-f66e-4676-be26-d9c3de61749b] received
+[2026-03-17 00:55:00,147: INFO/ForkPoolWorker-3] Resetting stale tasks
+[2026-03-17 00:55:00,161: INFO/ForkPoolWorker-3] Task tasks.reset_stale_tasks[f66c3934-f66e-4676-be26-d9c3de61749b] succeeded in 0.014745457971002907s: {'status': 'completed', 'timestamp': '2026-03-17T00:55:00.160204'}
+[2026-03-17 00:56:00,065: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:57:00,132: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:58:00,122: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 00:59:00,137: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 02:00:00,030: INFO/Beat] Scheduler: Sending due task scrape-douyin-daily (tasks.scrape_douyin_daily)
+[2026-03-17 02:00:00,033: INFO/MainProcess] Task tasks.scrape_douyin_daily[5f4da9cb-bb7d-43b7-bfda-969befc4bb1c] received
+[2026-03-17 02:00:00,035: INFO/ForkPoolWorker-3] Starting scrape_douyin_daily: running node douyin-scraper.js 100
+[2026-03-17 03:00:00,062: ERROR/MainProcess] Task handler raised error: TimeLimitExceeded(3600)
+Traceback (most recent call last):
+  File "/Users/caoxiaopeng/Desktop/git/douyin-crawler/worker/.venv/lib/python3.12/site-packages/billiard/pool.py", line 684, in on_hard_timeout
+    raise TimeLimitExceeded(job._timeout)
+billiard.einfo.ExceptionWithTraceback: 
+"""
+Traceback (most recent call last):
+  File "/Users/caoxiaopeng/Desktop/git/douyin-crawler/worker/.venv/lib/python3.12/site-packages/billiard/pool.py", line 684, in on_hard_timeout
+    raise TimeLimitExceeded(job._timeout)
+billiard.exceptions.TimeLimitExceeded: TimeLimitExceeded(3600,)
+"""
+[2026-03-17 03:00:00,063: ERROR/MainProcess] Hard time limit (3600s) exceeded for tasks.scrape_douyin_daily[5f4da9cb-bb7d-43b7-bfda-969befc4bb1c]
+[2026-03-17 03:00:01,060: ERROR/MainProcess] Process 'ForkPoolWorker-3' pid:62923 exited with 'signal 9 (SIGKILL)'
+[2026-03-17 05:00:00,130: INFO/Beat] Scheduler: Sending due task download-yesterday-videos-daily (tasks.download_yesterday_videos)
+[2026-03-17 06:00:00,114: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:00:00,118: INFO/MainProcess] Task tasks.reset_stale_tasks[bf60dffa-d2c2-494f-9eba-c69bb34f2fcf] received
+[2026-03-17 06:00:00,133: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:00:00,170: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[bf60dffa-d2c2-494f-9eba-c69bb34f2fcf] succeeded in 0.04892037500394508s: {'status': 'completed', 'timestamp': '2026-03-17T06:00:00.168697'}
+[2026-03-17 06:01:00,049: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:01:00,051: INFO/MainProcess] Task tasks.reset_stale_tasks[d5ec03ba-a7db-4acd-8d00-92ba6d4a7878] received
+[2026-03-17 06:01:00,052: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:01:00,061: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[d5ec03ba-a7db-4acd-8d00-92ba6d4a7878] succeeded in 0.008853917010128498s: {'status': 'completed', 'timestamp': '2026-03-17T06:01:00.060174'}
+[2026-03-17 06:02:00,007: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:02:00,010: INFO/MainProcess] Task tasks.reset_stale_tasks[f73d6b08-07a6-444e-91bc-cd50fa5445c2] received
+[2026-03-17 06:02:00,011: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:02:00,021: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[f73d6b08-07a6-444e-91bc-cd50fa5445c2] succeeded in 0.010239124996587634s: {'status': 'completed', 'timestamp': '2026-03-17T06:02:00.020226'}
+[2026-03-17 06:03:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:03:00,133: INFO/MainProcess] Task tasks.reset_stale_tasks[05bd4d73-6c9b-44f2-a98c-1e8135da1833] received
+[2026-03-17 06:03:00,134: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:03:00,142: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[05bd4d73-6c9b-44f2-a98c-1e8135da1833] succeeded in 0.008445832994766533s: {'status': 'completed', 'timestamp': '2026-03-17T06:03:00.141289'}
+[2026-03-17 06:04:00,105: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:04:00,108: INFO/MainProcess] Task tasks.reset_stale_tasks[eaebf87d-a9e3-4862-b4fd-9ca9408416f7] received
+[2026-03-17 06:04:00,109: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:04:00,117: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[eaebf87d-a9e3-4862-b4fd-9ca9408416f7] succeeded in 0.008346540969796479s: {'status': 'completed', 'timestamp': '2026-03-17T06:04:00.116120'}
+[2026-03-17 06:05:00,099: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:05:00,103: INFO/MainProcess] Task tasks.reset_stale_tasks[42ee6f56-a756-47fa-a6b5-d3faf5b1e17d] received
+[2026-03-17 06:05:00,105: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:05:00,116: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[42ee6f56-a756-47fa-a6b5-d3faf5b1e17d] succeeded in 0.0122501669684425s: {'status': 'completed', 'timestamp': '2026-03-17T06:05:00.115490'}
+[2026-03-17 06:06:00,133: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:06:00,135: INFO/MainProcess] Task tasks.reset_stale_tasks[9fd348a9-65f4-404d-afda-9f49d07af407] received
+[2026-03-17 06:06:00,136: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:06:00,144: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[9fd348a9-65f4-404d-afda-9f49d07af407] succeeded in 0.009006707987282425s: {'status': 'completed', 'timestamp': '2026-03-17T06:06:00.143683'}
+[2026-03-17 06:07:00,115: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:07:00,117: INFO/MainProcess] Task tasks.reset_stale_tasks[9638befd-0d78-401c-9926-fca50f7daa73] received
+[2026-03-17 06:07:00,118: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:07:00,128: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[9638befd-0d78-401c-9926-fca50f7daa73] succeeded in 0.01026583299972117s: {'status': 'completed', 'timestamp': '2026-03-17T06:07:00.127019'}
+[2026-03-17 06:08:00,130: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:09:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:09:00,143: INFO/MainProcess] Task tasks.reset_stale_tasks[c94bf5fa-b3b4-49e9-8a1f-8efc083541ae] received
+[2026-03-17 06:09:00,144: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:09:00,154: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[c94bf5fa-b3b4-49e9-8a1f-8efc083541ae] succeeded in 0.009953250002581626s: {'status': 'completed', 'timestamp': '2026-03-17T06:09:00.153131'}
+[2026-03-17 06:10:00,134: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:11:00,107: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:12:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:13:00,013: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:14:00,084: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:15:00,116: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:16:00,140: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:17:00,112: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:18:00,118: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:19:00,065: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:20:00,105: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:21:00,059: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:22:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:23:00,139: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:23:00,141: INFO/MainProcess] Task tasks.reset_stale_tasks[746cb9dc-3b7b-4b20-894e-c4cb218fe27d] received
+[2026-03-17 06:23:00,142: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:23:00,150: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[746cb9dc-3b7b-4b20-894e-c4cb218fe27d] succeeded in 0.008552749990485609s: {'status': 'completed', 'timestamp': '2026-03-17T06:23:00.149550'}
+[2026-03-17 06:24:00,047: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:25:00,032: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:26:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:27:00,114: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:28:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:29:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:30:00,129: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:31:00,126: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:32:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:33:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:34:00,133: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:34:00,136: INFO/MainProcess] Task tasks.reset_stale_tasks[787c9da2-5b99-4da0-b8b5-a8a561a3504f] received
+[2026-03-17 06:34:00,137: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:34:00,147: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[787c9da2-5b99-4da0-b8b5-a8a561a3504f] succeeded in 0.010502209013793617s: {'status': 'completed', 'timestamp': '2026-03-17T06:34:00.145599'}
+[2026-03-17 06:35:00,115: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:35:00,117: INFO/MainProcess] Task tasks.reset_stale_tasks[bf0d38a7-4172-4efe-8616-0e72c044df5f] received
+[2026-03-17 06:35:00,118: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:35:00,130: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[bf0d38a7-4172-4efe-8616-0e72c044df5f] succeeded in 0.012798917014151812s: {'status': 'completed', 'timestamp': '2026-03-17T06:35:00.129649'}
+[2026-03-17 06:36:00,125: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:37:00,133: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:38:00,088: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:39:00,012: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:40:00,140: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:40:00,143: INFO/MainProcess] Task tasks.reset_stale_tasks[f2251fbe-0bc3-47ea-9439-83c60706e622] received
+[2026-03-17 06:40:00,144: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:40:00,157: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[f2251fbe-0bc3-47ea-9439-83c60706e622] succeeded in 0.013636166986543685s: {'status': 'completed', 'timestamp': '2026-03-17T06:40:00.156743'}
+[2026-03-17 06:41:00,140: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:41:00,142: INFO/MainProcess] Task tasks.reset_stale_tasks[6644fbfe-81b1-46b8-8b56-341076e28fbd] received
+[2026-03-17 06:41:00,143: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:41:00,152: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[6644fbfe-81b1-46b8-8b56-341076e28fbd] succeeded in 0.009046124992892146s: {'status': 'completed', 'timestamp': '2026-03-17T06:41:00.150764'}
+[2026-03-17 06:42:00,115: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:42:00,118: INFO/MainProcess] Task tasks.reset_stale_tasks[7093dfbe-61eb-4e4e-b9ed-8b6891b85668] received
+[2026-03-17 06:42:00,119: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:42:00,128: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[7093dfbe-61eb-4e4e-b9ed-8b6891b85668] succeeded in 0.009235000004991889s: {'status': 'completed', 'timestamp': '2026-03-17T06:42:00.126884'}
+[2026-03-17 06:43:00,069: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:43:00,071: INFO/MainProcess] Task tasks.reset_stale_tasks[2e3ac00d-859d-47ef-a9e5-b31d4392ed50] received
+[2026-03-17 06:43:00,072: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:43:00,081: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[2e3ac00d-859d-47ef-a9e5-b31d4392ed50] succeeded in 0.009922333003487438s: {'status': 'completed', 'timestamp': '2026-03-17T06:43:00.080905'}
+[2026-03-17 06:44:00,029: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:44:00,032: INFO/MainProcess] Task tasks.reset_stale_tasks[faf802b5-0914-43fb-9282-9e5cfc03efec] received
+[2026-03-17 06:44:00,034: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:44:00,044: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[faf802b5-0914-43fb-9282-9e5cfc03efec] succeeded in 0.01105254195863381s: {'status': 'completed', 'timestamp': '2026-03-17T06:44:00.043349'}
+[2026-03-17 06:45:00,102: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:46:00,103: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:46:00,105: INFO/MainProcess] Task tasks.reset_stale_tasks[a1e3bfa0-dcc5-497d-b0cb-f5c3367bf489] received
+[2026-03-17 06:46:00,106: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:46:00,114: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[a1e3bfa0-dcc5-497d-b0cb-f5c3367bf489] succeeded in 0.009196125029120594s: {'status': 'completed', 'timestamp': '2026-03-17T06:46:00.113854'}
+[2026-03-17 06:47:00,096: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:48:00,137: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:49:00,138: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:50:00,129: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:51:00,088: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:52:00,134: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:53:00,014: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:54:00,121: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:54:00,123: INFO/MainProcess] Task tasks.reset_stale_tasks[b553f024-4882-4fc0-ba26-d96218eb3738] received
+[2026-03-17 06:54:00,124: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:54:00,133: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[b553f024-4882-4fc0-ba26-d96218eb3738] succeeded in 0.008831041981466115s: {'status': 'completed', 'timestamp': '2026-03-17T06:54:00.132011'}
+[2026-03-17 06:55:00,104: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:55:00,106: INFO/MainProcess] Task tasks.reset_stale_tasks[171a2cbf-5d89-4c8d-94b6-f400e134c174] received
+[2026-03-17 06:55:00,108: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:55:00,117: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[171a2cbf-5d89-4c8d-94b6-f400e134c174] succeeded in 0.009582541999407113s: {'status': 'completed', 'timestamp': '2026-03-17T06:55:00.115988'}
+[2026-03-17 06:56:00,129: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:56:00,132: INFO/MainProcess] Task tasks.reset_stale_tasks[f621acea-f8a0-486c-beb5-134b8604b918] received
+[2026-03-17 06:56:00,133: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:56:00,144: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[f621acea-f8a0-486c-beb5-134b8604b918] succeeded in 0.01110954099567607s: {'status': 'completed', 'timestamp': '2026-03-17T06:56:00.142632'}
+[2026-03-17 06:57:00,116: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:58:00,055: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:58:00,059: INFO/MainProcess] Task tasks.reset_stale_tasks[1c68dee9-d316-4849-813d-70080331395e] received
+[2026-03-17 06:58:00,061: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:58:00,073: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[1c68dee9-d316-4849-813d-70080331395e] succeeded in 0.012708916037809104s: {'status': 'completed', 'timestamp': '2026-03-17T06:58:00.071843'}
+[2026-03-17 06:59:00,002: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 06:59:00,006: INFO/MainProcess] Task tasks.reset_stale_tasks[bb1ef0a3-bfbd-4743-9641-afb5c57df88b] received
+[2026-03-17 06:59:00,008: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 06:59:00,023: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[bb1ef0a3-bfbd-4743-9641-afb5c57df88b] succeeded in 0.015845832997001708s: {'status': 'completed', 'timestamp': '2026-03-17T06:59:00.021413'}
+[2026-03-17 08:00:00,086: INFO/Beat] Scheduler: Sending due task process-videos-daily (tasks.process_pending_videos)
+[2026-03-17 08:00:00,092: INFO/MainProcess] Task tasks.process_pending_videos[573e2fde-3771-4a53-baf2-e4ee28544300] received
+[2026-03-17 08:00:00,093: INFO/ForkPoolWorker-4] Starting scheduled job: processing up to 20 videos with webgemini (sequential)
+[2026-03-17 08:00:00,110: INFO/ForkPoolWorker-4] Found 20 videos to process (have valid local file, no summary)
+[2026-03-17 08:00:00,110: INFO/ForkPoolWorker-4] Processing video 7617010846262136114 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:00:00,117: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7617010846262136114.mp4']
+[2026-03-17 08:00:00,169: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=146eafe204db status=pending
+[2026-03-17 08:00:00,177: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=146eafe204db
+[2026-03-17 08:00:00,177: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=146eafe204db url=http://127.0.0.1:8200/chat/146eafe204db
+[2026-03-17 08:00:00,183: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=1 status=processing
+[2026-03-17 08:00:05,190: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=2 status=processing
+[2026-03-17 08:00:10,343: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=3 status=processing
+[2026-03-17 08:00:46,122: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=10 status=processing
+[2026-03-17 08:01:36,841: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=20 status=processing
+[2026-03-17 08:02:27,913: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=30 status=processing
+[2026-03-17 08:03:18,889: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=40 status=processing
+[2026-03-17 08:04:09,925: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=50 status=processing
+[2026-03-17 08:05:00,985: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=60 status=processing
+[2026-03-17 08:05:51,943: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=70 status=processing
+[2026-03-17 08:06:42,794: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=80 status=processing
+[2026-03-17 08:07:34,016: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=90 status=processing
+[2026-03-17 08:08:24,795: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=100 status=processing
+[2026-03-17 08:09:15,882: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=146eafe204db poll_count=110 status=processing
+[2026-03-17 08:10:01,826: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=146eafe204db status=timeout poll_count=118
+[2026-03-17 08:10:01,835: ERROR/ForkPoolWorker-4] Webgemini failed for 7617010846262136114: Poll timeout
+[2026-03-17 08:10:01,835: INFO/ForkPoolWorker-4] Processing video 7614904259271806214 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:10:01,841: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7614904259271806214.mp4']
+[2026-03-17 08:10:01,848: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=4fdb470b949d status=pending
+[2026-03-17 08:10:01,853: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=4fdb470b949d
+[2026-03-17 08:10:01,853: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=4fdb470b949d url=http://127.0.0.1:8200/chat/4fdb470b949d
+[2026-03-17 08:10:01,854: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=4fdb470b949d poll_count=1 status=pending
+[2026-03-17 08:10:06,928: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=4fdb470b949d poll_count=2 status=pending
+[2026-03-17 08:10:12,001: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=4fdb470b949d poll_count=3 status=pending
+[2026-03-17 08:10:47,664: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=4fdb470b949d poll_count=10 status=pending
+[2026-03-17 08:11:38,788: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=4fdb470b949d poll_count=20 status=pending
+[2026-03-17 08:12:29,472: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=4fdb470b949d poll_count=30 status=pending
+[2026-03-17 08:13:19,979: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=4fdb470b949d poll_count=40 status=pending
+[2026-03-17 08:14:10,519: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=4fdb470b949d poll_count=50 status=processing
+[2026-03-17 08:15:01,593: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=4fdb470b949d poll_count=60 status=processing
+[2026-03-17 08:15:52,396: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=4fdb470b949d poll_count=70 status=processing
+[2026-03-17 08:16:02,698: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=4fdb470b949d status=completed poll_count=72 text_len=310 text_preview=这段视频主要讲述了美食博主“大胃王浪胃仙”的搭档（或相关探店博主）前往山西寻访当地特色美食。以下是视频内容的简要概括：
+
+* **探店背景：** 博主驱车6小时专程来到山西探访一家名为“海旺黄酱面馆”...
+[2026-03-17 08:16:02,705: INFO/ForkPoolWorker-4] Webgemini summary completed for 7614904259271806214
+[2026-03-17 08:16:02,706: INFO/ForkPoolWorker-4] Processing video 7591816654754024742 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:16:02,712: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7591816654754024742.mp4']
+[2026-03-17 08:16:02,720: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=25d770666cb5 status=pending
+[2026-03-17 08:16:02,727: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=25d770666cb5
+[2026-03-17 08:16:02,727: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=25d770666cb5 url=http://127.0.0.1:8200/chat/25d770666cb5
+[2026-03-17 08:16:02,733: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=25d770666cb5 poll_count=1 status=processing
+[2026-03-17 08:16:07,759: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=25d770666cb5 poll_count=2 status=processing
+[2026-03-17 08:16:12,801: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=25d770666cb5 poll_count=3 status=processing
+[2026-03-17 08:16:48,546: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=25d770666cb5 poll_count=10 status=processing
+[2026-03-17 08:17:14,201: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=25d770666cb5 status=completed poll_count=15 text_len=400 text_preview=这段视频是一部名为**《你的名字：褪色的记忆》**（Fading Memory）的原创纪录片预告或片头片段。
+
+### 视频核心内容概括：
+* **视觉风格**：采用极具动感的**穿越机（FPV）航拍...
+[2026-03-17 08:17:14,209: INFO/ForkPoolWorker-4] Webgemini summary completed for 7591816654754024742
+[2026-03-17 08:17:14,209: INFO/ForkPoolWorker-4] Processing video 7616725061235706297 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:17:14,216: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7616725061235706297.mp4']
+[2026-03-17 08:17:14,224: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=e87816263758 status=pending
+[2026-03-17 08:17:14,230: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=e87816263758
+[2026-03-17 08:17:14,231: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=e87816263758 url=http://127.0.0.1:8200/chat/e87816263758
+[2026-03-17 08:17:14,237: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=e87816263758 poll_count=1 status=processing
+[2026-03-17 08:17:19,370: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=e87816263758 poll_count=2 status=processing
+[2026-03-17 08:17:24,382: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=e87816263758 poll_count=3 status=processing
+[2026-03-17 08:18:00,303: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=e87816263758 poll_count=10 status=processing
+[2026-03-17 08:18:15,645: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=e87816263758 status=completed poll_count=13 text_len=218 text_preview=这段视频内容非常简单且治愈，可以概括为：
+
+视频展示了一只**可爱的白色小狗**（看起来像比熊或博美混血）被主人抱在怀里。在背景音乐的节奏下，主人握着小狗的前爪，配合旋律让它**左右晃动、上下“跳舞”...
+[2026-03-17 08:18:15,658: INFO/ForkPoolWorker-4] Webgemini summary completed for 7616725061235706297
+[2026-03-17 08:18:15,659: INFO/ForkPoolWorker-4] Processing video 7615628127700076913 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:18:15,668: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7615628127700076913.mp4']
+[2026-03-17 08:18:15,678: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=8b3931f00457 status=pending
+[2026-03-17 08:18:15,687: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=8b3931f00457
+[2026-03-17 08:18:15,687: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=8b3931f00457 url=http://127.0.0.1:8200/chat/8b3931f00457
+[2026-03-17 08:18:15,693: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=8b3931f00457 poll_count=1 status=processing
+[2026-03-17 08:18:20,836: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=8b3931f00457 poll_count=2 status=processing
+[2026-03-17 08:18:25,979: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=8b3931f00457 poll_count=3 status=processing
+[2026-03-17 08:19:01,735: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=8b3931f00457 poll_count=10 status=processing
+[2026-03-17 08:19:17,098: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=8b3931f00457 status=completed poll_count=13 text_len=428 text_preview=这段视频展示了 **Google 翻译（Google Translate）** 如何通过其移动应用程序帮助人们在不同语言的环境中进行交流和理解。
+
+视频主要通过以下几个核心功能展示了其便利性：
+
+* ...
+[2026-03-17 08:19:17,106: INFO/ForkPoolWorker-4] Webgemini summary completed for 7615628127700076913
+[2026-03-17 08:19:17,107: INFO/ForkPoolWorker-4] Processing video 7602255899726737344 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:19:17,114: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7602255899726737344.mp4']
+[2026-03-17 08:19:17,123: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=160a8ee8d313 status=pending
+[2026-03-17 08:19:17,130: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=160a8ee8d313
+[2026-03-17 08:19:17,130: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=160a8ee8d313 url=http://127.0.0.1:8200/chat/160a8ee8d313
+[2026-03-17 08:19:17,135: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=160a8ee8d313 poll_count=1 status=processing
+[2026-03-17 08:19:22,201: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=160a8ee8d313 poll_count=2 status=processing
+[2026-03-17 08:19:27,207: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=160a8ee8d313 poll_count=3 status=processing
+[2026-03-17 08:20:02,932: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=160a8ee8d313 poll_count=10 status=processing
+[2026-03-17 08:20:23,367: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=160a8ee8d313 status=completed poll_count=14 text_len=326 text_preview=这段视频展现了一段极具**禅意**与**宁静感**的中式庭院美景，主要包含以下画面：
+
+* **锦鲤嬉戏**：视频开头以俯瞰视角拍摄了一群色彩斑斓的锦鲤在碧绿的池水中环绕游动，水面上烟雾缭绕，光影婆娑...
+[2026-03-17 08:20:23,374: INFO/ForkPoolWorker-4] Webgemini summary completed for 7602255899726737344
+[2026-03-17 08:20:23,374: INFO/ForkPoolWorker-4] Processing video 7614778819363449498 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:20:23,381: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7614778819363449498.mp4']
+[2026-03-17 08:20:23,390: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=d521c0ec1b46 status=pending
+[2026-03-17 08:20:23,399: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=d521c0ec1b46
+[2026-03-17 08:20:23,400: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=d521c0ec1b46 url=http://127.0.0.1:8200/chat/d521c0ec1b46
+[2026-03-17 08:20:23,405: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=d521c0ec1b46 poll_count=1 status=processing
+[2026-03-17 08:20:28,466: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=d521c0ec1b46 poll_count=2 status=processing
+[2026-03-17 08:20:33,537: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=d521c0ec1b46 poll_count=3 status=processing
+[2026-03-17 08:21:08,862: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=d521c0ec1b46 poll_count=10 status=processing
+[2026-03-17 08:21:24,186: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=d521c0ec1b46 status=completed poll_count=13 text_len=107 text_preview=这段视频展示了一个温馨有趣的互动瞬间：
+
+画面中，主人用双手比出一个圆圈，一只可爱的短耳三花猫精准地将头钻进这个圆圈里。随后，主人温柔地用双手捧住猫咪的脸，猫咪也顺势凑近镜头，展现出圆滚滚的脑袋和大眼...
+[2026-03-17 08:21:24,198: INFO/ForkPoolWorker-4] Webgemini summary completed for 7614778819363449498
+[2026-03-17 08:21:24,199: INFO/ForkPoolWorker-4] Processing video 7609872247339318611 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:21:24,208: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7609872247339318611.mp4']
+[2026-03-17 08:21:24,219: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=d62bed60a17c status=pending
+[2026-03-17 08:21:24,227: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=d62bed60a17c
+[2026-03-17 08:21:24,227: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=d62bed60a17c url=http://127.0.0.1:8200/chat/d62bed60a17c
+[2026-03-17 08:21:24,234: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=d62bed60a17c poll_count=1 status=processing
+[2026-03-17 08:21:29,350: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=d62bed60a17c poll_count=2 status=processing
+[2026-03-17 08:21:34,488: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=d62bed60a17c poll_count=3 status=processing
+[2026-03-17 08:22:10,260: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=d62bed60a17c poll_count=10 status=processing
+[2026-03-17 08:22:35,770: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=d62bed60a17c status=completed poll_count=15 text_len=214 text_preview=这段视频捕捉到了一个充满生命力且唯美的瞬间，可以概括为：
+
+在夕阳余晖下的水岸边，**成群的红嘴鸥**在波光粼粼的水面上盘旋飞舞。镜头以第一视角记录了投喂者的手伸向天空，与这些灵动的鸟类互动。背景中连...
+[2026-03-17 08:22:35,777: INFO/ForkPoolWorker-4] Webgemini summary completed for 7609872247339318611
+[2026-03-17 08:22:35,778: INFO/ForkPoolWorker-4] Processing video 7614135316082268870 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:22:35,783: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7614135316082268870.mp4']
+[2026-03-17 08:22:35,791: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=a31cbad6d0ab status=pending
+[2026-03-17 08:22:35,797: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=a31cbad6d0ab
+[2026-03-17 08:22:35,797: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=a31cbad6d0ab url=http://127.0.0.1:8200/chat/a31cbad6d0ab
+[2026-03-17 08:22:35,802: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=a31cbad6d0ab poll_count=1 status=processing
+[2026-03-17 08:22:40,906: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=a31cbad6d0ab poll_count=2 status=processing
+[2026-03-17 08:22:45,936: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=a31cbad6d0ab poll_count=3 status=processing
+[2026-03-17 08:23:21,660: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=a31cbad6d0ab poll_count=10 status=processing
+[2026-03-17 08:23:37,048: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=a31cbad6d0ab status=completed poll_count=13 text_len=364 text_preview=这段视频展示了一位博主（@一栗小莎子）进行**敦煌风/西域风格**的变装与舞蹈展示。
+
+以下是内容的简要概括：
+
+### **核心内容**
+* **人物造型**：视频主角身着华丽的红金色调服饰，妆容融...
+[2026-03-17 08:23:37,055: INFO/ForkPoolWorker-4] Webgemini summary completed for 7614135316082268870
+[2026-03-17 08:23:37,056: INFO/ForkPoolWorker-4] Processing video 7609687420455699530 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:23:37,062: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7609687420455699530.mp4']
+[2026-03-17 08:23:37,070: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=479d304efbb1 status=pending
+[2026-03-17 08:23:37,076: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=479d304efbb1
+[2026-03-17 08:23:37,077: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=479d304efbb1 url=http://127.0.0.1:8200/chat/479d304efbb1
+[2026-03-17 08:23:37,083: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=479d304efbb1 poll_count=1 status=processing
+[2026-03-17 08:23:42,236: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=479d304efbb1 poll_count=2 status=processing
+[2026-03-17 08:23:47,240: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=479d304efbb1 poll_count=3 status=processing
+[2026-03-17 08:24:23,155: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=479d304efbb1 poll_count=10 status=processing
+[2026-03-17 08:24:38,569: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=479d304efbb1 status=completed poll_count=13 text_len=239 text_preview=这段视频展示了多处色彩斑斓、如诗如画的花卉景观，呈现了大自然中浪漫且迷人的瞬间。
+
+视频内容可以概括为以下几个场景：
+* **繁花似锦的园林：** 树木环绕下，各色鲜花在溪流边盛放，游客在其间漫步。
+...
+[2026-03-17 08:24:38,577: INFO/ForkPoolWorker-4] Webgemini summary completed for 7609687420455699530
+[2026-03-17 08:24:38,577: INFO/ForkPoolWorker-4] Processing video 7597013211385437818 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:24:38,585: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7597013211385437818.mp4']
+[2026-03-17 08:24:38,593: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=9a9cee4cec52 status=pending
+[2026-03-17 08:24:38,600: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=9a9cee4cec52
+[2026-03-17 08:24:38,601: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=9a9cee4cec52 url=http://127.0.0.1:8200/chat/9a9cee4cec52
+[2026-03-17 08:24:38,606: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=9a9cee4cec52 poll_count=1 status=processing
+[2026-03-17 08:24:43,711: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=9a9cee4cec52 poll_count=2 status=processing
+[2026-03-17 08:24:48,824: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=9a9cee4cec52 poll_count=3 status=processing
+[2026-03-17 08:25:24,633: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=9a9cee4cec52 poll_count=10 status=processing
+[2026-03-17 08:25:39,839: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=9a9cee4cec52 status=completed poll_count=13 text_len=380 text_preview=这段视频展示了一个非常有创意的“变身”过程，主要内容可以概括为以下几点：
+
+* **色彩融合：** 视频开始，女生展示了涂有**白色**和**红色**颜料的两只手，并在屏幕上用“白色爱心 + 红色爱心...
+[2026-03-17 08:25:39,850: INFO/ForkPoolWorker-4] Webgemini summary completed for 7597013211385437818
+[2026-03-17 08:25:39,850: INFO/ForkPoolWorker-4] Processing video 7616612310354530408 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:25:39,858: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7616612310354530408.mp4']
+[2026-03-17 08:25:39,867: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=67a94ce8555a status=pending
+[2026-03-17 08:25:39,874: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=67a94ce8555a
+[2026-03-17 08:25:39,874: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=67a94ce8555a url=http://127.0.0.1:8200/chat/67a94ce8555a
+[2026-03-17 08:25:39,879: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=67a94ce8555a poll_count=1 status=processing
+[2026-03-17 08:25:45,032: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=67a94ce8555a poll_count=2 status=processing
+[2026-03-17 08:25:50,057: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=67a94ce8555a poll_count=3 status=processing
+[2026-03-17 08:26:25,884: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=67a94ce8555a poll_count=10 status=processing
+[2026-03-17 08:27:16,951: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=67a94ce8555a poll_count=20 status=processing
+[2026-03-17 08:28:07,568: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=67a94ce8555a poll_count=30 status=processing
+[2026-03-17 08:28:58,669: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=67a94ce8555a poll_count=40 status=processing
+[2026-03-17 08:29:49,695: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=67a94ce8555a poll_count=50 status=processing
+[2026-03-17 08:30:40,371: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=67a94ce8555a poll_count=60 status=processing
+[2026-03-17 08:31:26,224: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=67a94ce8555a status=completed poll_count=69 text_len=416 text_preview=视频内容主要讲述了一场发生在饭店里关于“留黄鱼”引发的职场乌龙和责任推卸。
+
+**主要情节概括：**
+1.  **起因：** 包房经理（吴经理）答应为重要客户张总留一条大黄鱼，并吩咐寒假工（孙晓晓）去...
+[2026-03-17 08:31:26,234: INFO/ForkPoolWorker-4] Webgemini summary completed for 7616612310354530408
+[2026-03-17 08:31:26,235: INFO/ForkPoolWorker-4] Processing video 7601834704878242481 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:31:26,242: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7601834704878242481.mp4']
+[2026-03-17 08:31:26,252: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=9648f7f63c7d status=pending
+[2026-03-17 08:31:26,259: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=9648f7f63c7d
+[2026-03-17 08:31:26,260: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=9648f7f63c7d url=http://127.0.0.1:8200/chat/9648f7f63c7d
+[2026-03-17 08:31:26,268: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=9648f7f63c7d poll_count=1 status=processing
+[2026-03-17 08:31:31,381: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=9648f7f63c7d poll_count=2 status=processing
+[2026-03-17 08:31:36,500: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=9648f7f63c7d poll_count=3 status=processing
+[2026-03-17 08:32:12,337: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=9648f7f63c7d poll_count=10 status=processing
+[2026-03-17 08:32:27,596: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=9648f7f63c7d status=completed poll_count=13 text_len=292 text_preview=这段视频是一个简短的创意特效剪辑，内容可以概括为：
+
+1.  **开场：** 一位女生身穿印有蜡笔小新图案的白色毛绒睡衣，手里拿着一条白毯子，并配有字幕“看我一秒消失”。
+2.  **转场：** 她将...
+[2026-03-17 08:32:27,607: INFO/ForkPoolWorker-4] Webgemini summary completed for 7601834704878242481
+[2026-03-17 08:32:27,607: INFO/ForkPoolWorker-4] Processing video 7602204642776255796 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:32:27,615: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7602204642776255796.mp4']
+[2026-03-17 08:32:27,625: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=ed8d38ec371f status=pending
+[2026-03-17 08:32:27,632: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=ed8d38ec371f
+[2026-03-17 08:32:27,633: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=ed8d38ec371f url=http://127.0.0.1:8200/chat/ed8d38ec371f
+[2026-03-17 08:32:27,641: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=1 status=processing
+[2026-03-17 08:32:32,765: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=2 status=processing
+[2026-03-17 08:32:37,778: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=3 status=processing
+[2026-03-17 08:33:13,628: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=10 status=processing
+[2026-03-17 08:34:04,680: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=20 status=processing
+[2026-03-17 08:34:55,507: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=30 status=processing
+[2026-03-17 08:35:46,669: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=40 status=processing
+[2026-03-17 08:36:37,503: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=50 status=processing
+[2026-03-17 08:37:28,620: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=60 status=processing
+[2026-03-17 08:38:19,490: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=70 status=processing
+[2026-03-17 08:39:10,242: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=80 status=processing
+[2026-03-17 08:40:01,303: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=90 status=processing
+[2026-03-17 08:40:52,024: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=100 status=processing
+[2026-03-17 08:41:42,676: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=ed8d38ec371f poll_count=110 status=processing
+[2026-03-17 08:42:13,452: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=ed8d38ec371f status=completed poll_count=116 text_len=375 text_preview=这段视频是对1991年经典科幻电影**《终结者2：审判日》**（Terminator 2: Judgment Day）的简要回顾与评价。
+
+视频的主要内容包括：
+
+* **电影地位**：称其为1991...
+[2026-03-17 08:42:13,464: INFO/ForkPoolWorker-4] Webgemini summary completed for 7602204642776255796
+[2026-03-17 08:42:13,464: INFO/ForkPoolWorker-4] Processing video 7594892223159831962 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:42:13,472: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7594892223159831962.mp4']
+[2026-03-17 08:42:13,484: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=8f7e9b4449c1 status=pending
+[2026-03-17 08:42:13,491: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=8f7e9b4449c1
+[2026-03-17 08:42:13,492: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=8f7e9b4449c1 url=http://127.0.0.1:8200/chat/8f7e9b4449c1
+[2026-03-17 08:42:13,499: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=8f7e9b4449c1 poll_count=1 status=processing
+[2026-03-17 08:42:18,561: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=8f7e9b4449c1 poll_count=2 status=processing
+[2026-03-17 08:42:23,694: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=8f7e9b4449c1 poll_count=3 status=processing
+[2026-03-17 08:42:59,441: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=8f7e9b4449c1 poll_count=10 status=processing
+[2026-03-17 08:43:14,738: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=8f7e9b4449c1 status=completed poll_count=13 text_len=296 text_preview=这段视频展示了一段典型的短视频平台（如抖音/TikTok）风格的**手势舞**。
+
+以下是内容的简要概括：
+
+* **主角形象**：一名身穿灰色开衫、白衬衫及百褶裙（类似学生制服风格）的年轻女性。
+*...
+[2026-03-17 08:43:14,751: INFO/ForkPoolWorker-4] Webgemini summary completed for 7594892223159831962
+[2026-03-17 08:43:14,751: INFO/ForkPoolWorker-4] Processing video 7587234796758191402 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:43:14,762: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7587234796758191402.mp4']
+[2026-03-17 08:43:14,773: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=bc786a2c296c status=pending
+[2026-03-17 08:43:14,782: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=bc786a2c296c
+[2026-03-17 08:43:14,782: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=bc786a2c296c url=http://127.0.0.1:8200/chat/bc786a2c296c
+[2026-03-17 08:43:14,789: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=bc786a2c296c poll_count=1 status=processing
+[2026-03-17 08:43:19,943: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=bc786a2c296c poll_count=2 status=processing
+[2026-03-17 08:43:25,014: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=bc786a2c296c poll_count=3 status=processing
+[2026-03-17 08:44:00,831: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=bc786a2c296c poll_count=10 status=processing
+[2026-03-17 08:44:51,625: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=bc786a2c296c poll_count=20 status=processing
+[2026-03-17 08:45:42,820: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=bc786a2c296c poll_count=30 status=processing
+[2026-03-17 08:46:33,624: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=bc786a2c296c poll_count=40 status=processing
+[2026-03-17 08:47:24,830: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=bc786a2c296c poll_count=50 status=processing
+[2026-03-17 08:48:16,160: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=bc786a2c296c status=completed poll_count=60 text_len=279 text_preview=这段视频是关于书籍评测和推荐的。
+
+在视频中，博主参考了一份“书籍 Top 50”排行榜，并分享了自己的看法。他重点推荐了排名第 50 位的**《艺术的故事》**（作者：E.H. 贡布里希）。
+
+视频...
+[2026-03-17 08:48:16,173: INFO/ForkPoolWorker-4] Webgemini summary completed for 7587234796758191402
+[2026-03-17 08:48:16,173: INFO/ForkPoolWorker-4] Processing video 7586376452988669221 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:48:16,184: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7586376452988669221.mp4']
+[2026-03-17 08:48:16,195: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=63cd6ffd527b status=pending
+[2026-03-17 08:48:16,204: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=63cd6ffd527b
+[2026-03-17 08:48:16,204: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=63cd6ffd527b url=http://127.0.0.1:8200/chat/63cd6ffd527b
+[2026-03-17 08:48:16,210: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=63cd6ffd527b poll_count=1 status=processing
+[2026-03-17 08:48:21,239: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=63cd6ffd527b poll_count=2 status=processing
+[2026-03-17 08:48:26,378: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=63cd6ffd527b poll_count=3 status=processing
+[2026-03-17 08:49:02,178: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=63cd6ffd527b poll_count=10 status=processing
+[2026-03-17 08:49:22,702: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=63cd6ffd527b status=completed poll_count=14 text_len=320 text_preview=这段视频呈现了一段极具**中式美学**色彩的视觉画面，主要内容可以概括为：
+
+* **核心画面**：一名身着红色古风斗篷、长发飘逸且系有红绸的女子，独自伫立在古色古香的朱红建筑高处，凭栏远眺。
+* *...
+[2026-03-17 08:49:22,713: INFO/ForkPoolWorker-4] Webgemini summary completed for 7586376452988669221
+[2026-03-17 08:49:22,714: INFO/ForkPoolWorker-4] Processing video 7605885399433399667 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:49:22,721: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7605885399433399667.mp4']
+[2026-03-17 08:49:22,731: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=04f6ee52b1e4 status=pending
+[2026-03-17 08:49:22,739: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=04f6ee52b1e4
+[2026-03-17 08:49:22,739: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=04f6ee52b1e4 url=http://127.0.0.1:8200/chat/04f6ee52b1e4
+[2026-03-17 08:49:22,747: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=04f6ee52b1e4 poll_count=1 status=processing
+[2026-03-17 08:49:27,803: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=04f6ee52b1e4 poll_count=2 status=processing
+[2026-03-17 08:49:32,924: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=04f6ee52b1e4 poll_count=3 status=processing
+[2026-03-17 08:50:08,764: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=04f6ee52b1e4 poll_count=10 status=processing
+[2026-03-17 08:50:29,182: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=04f6ee52b1e4 status=completed poll_count=14 text_len=273 text_preview=这段视频展示了一段唯美的中国古风水乡景观。
+
+视频以俯瞰视角呈现，主要内容包括：
+
+* **中心舞台**：湖中心有一个巨大的莲花状舞台，一位红衣表演者在上面翩翩起舞。
+* **水乡意境**：湖面上漂浮...
+[2026-03-17 08:50:29,193: INFO/ForkPoolWorker-4] Webgemini summary completed for 7605885399433399667
+[2026-03-17 08:50:29,194: INFO/ForkPoolWorker-4] Processing video 7614474435547406074 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:50:29,202: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7614474435547406074.mp4']
+[2026-03-17 08:50:29,213: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=478678869a86 status=pending
+[2026-03-17 08:50:29,222: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=478678869a86
+[2026-03-17 08:50:29,223: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=478678869a86 url=http://127.0.0.1:8200/chat/478678869a86
+[2026-03-17 08:50:29,231: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=478678869a86 poll_count=1 status=processing
+[2026-03-17 08:50:34,285: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=478678869a86 poll_count=2 status=processing
+[2026-03-17 08:50:39,329: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=478678869a86 poll_count=3 status=processing
+[2026-03-17 08:51:14,946: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=478678869a86 poll_count=10 status=processing
+[2026-03-17 08:51:35,266: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=478678869a86 status=completed poll_count=14 text_len=349 text_preview=这段视频展示了一个富有诗意且极具视觉美感的创意画面，可以概括为以下几点：
+
+* **核心内容**：视频中，一人手持一枝盛开的**花枝**（疑似樱花或梅花）作为弓身，另一手拉动系在花枝两端的细绳，模仿*...
+[2026-03-17 08:51:35,280: INFO/ForkPoolWorker-4] Webgemini summary completed for 7614474435547406074
+[2026-03-17 08:51:35,280: INFO/ForkPoolWorker-4] Processing video 7601483088598828608 for webgemini summary (submit -> wait -> next)
+[2026-03-17 08:51:35,289: INFO/ForkPoolWorker-4] [webgemini] POST /chat before: url=http://127.0.0.1:8200/chat prompt='这段视频讲了什么？请简要概括。' attachments_count=1 attachments=['douyin_7601483088598828608.mp4']
+[2026-03-17 08:51:35,298: INFO/ForkPoolWorker-4] [webgemini] POST /chat after: job_id=e97b7236388e status=pending
+[2026-03-17 08:51:35,306: INFO/ForkPoolWorker-4] Submitted to webgemini, job_id=e97b7236388e
+[2026-03-17 08:51:35,306: INFO/ForkPoolWorker-4] [webgemini] GET /chat/{job_id} before: job_id=e97b7236388e url=http://127.0.0.1:8200/chat/e97b7236388e
+[2026-03-17 08:51:35,312: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=e97b7236388e poll_count=1 status=processing
+[2026-03-17 08:51:40,420: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=e97b7236388e poll_count=2 status=processing
+[2026-03-17 08:51:45,447: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=e97b7236388e poll_count=3 status=processing
+[2026-03-17 08:52:21,279: INFO/ForkPoolWorker-4] [webgemini] GET /chat polling: job_id=e97b7236388e poll_count=10 status=processing
+[2026-03-17 08:52:41,658: INFO/ForkPoolWorker-4] [webgemini] GET /chat after: job_id=e97b7236388e status=completed poll_count=14 text_len=340 text_preview=这段视频展示了一次极具创意和美感的**角色变装**。
+
+## 视频内容概括
+1.  **趣味开场：** 视频开始，女生穿着舒适的黄色睡袍，在双手手心分别展示了**蓝色**和**黄色**的颜料，随后双手...
+[2026-03-17 08:52:41,667: INFO/ForkPoolWorker-4] Webgemini summary completed for 7601483088598828608
+[2026-03-17 08:52:41,670: INFO/ForkPoolWorker-4] Task tasks.process_pending_videos[573e2fde-3771-4a53-baf2-e4ee28544300] succeeded in 3161.556070957973s: {'completed': 19, 'failed': 1, 'total': 20, 'results': [{'video_id': '7617010846262136114', 'status': 'failed', 'error': 'Poll timeout'}, {'video_id': '7614904259271806214', 'status': 'completed'}, {'video_id': '7591816654754024742', 'status': 'completed'}, {'video_id': '7616725061235706297', 'status': 'completed'}, {'video_id': '7615628127700076913', 'status': 'completed'}, {'video_id': '7602255899726737344', 'status': 'completed'}, {'video_id': '7614778819363449498', 'status': 'completed'}, {'video_id': '7609872247339318611', 'status': 'completed'}, {'video_id': '7614135316082268870', 'status': 'completed'}, {'video_id': '7609687420455699530', 'status': 'completed'}, {'video_id': '7597013211385437818', 'status': 'completed'}, {'video_id': '7616612310354530408', 'status': 'completed'}, {'video_id': '7601834704878242481', 'status': 'completed'}, {'video_id': '7602204642776255796', 'status': 'completed'}, {'video_id': '7594892223159831962', 'status': 'completed'}, {'video_id': '7587234796758191402', 'status': , ...}]}
+[2026-03-17 12:00:00,055: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:00:00,063: INFO/MainProcess] Task tasks.reset_stale_tasks[0ff232da-68a7-4e4d-acc3-818b4b58d2a3] received
+[2026-03-17 12:00:00,068: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:00:00,080: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[0ff232da-68a7-4e4d-acc3-818b4b58d2a3] succeeded in 0.014123167027719319s: {'status': 'completed', 'timestamp': '2026-03-17T12:00:00.078700'}
+[2026-03-17 12:01:00,097: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:01:00,101: INFO/MainProcess] Task tasks.reset_stale_tasks[f5cee364-e325-4e39-8545-41e1e8f5ec79] received
+[2026-03-17 12:01:00,102: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:01:00,115: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[f5cee364-e325-4e39-8545-41e1e8f5ec79] succeeded in 0.013168125005904585s: {'status': 'completed', 'timestamp': '2026-03-17T12:01:00.113867'}
+[2026-03-17 12:02:00,129: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:02:00,134: INFO/MainProcess] Task tasks.reset_stale_tasks[d2e93f8f-439f-4a78-89c1-bf05ef43151a] received
+[2026-03-17 12:02:00,135: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:02:00,146: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[d2e93f8f-439f-4a78-89c1-bf05ef43151a] succeeded in 0.011418458947446197s: {'status': 'completed', 'timestamp': '2026-03-17T12:02:00.145401'}
+[2026-03-17 12:03:00,033: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:04:00,132: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:05:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:06:00,071: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:07:00,092: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:08:00,098: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:09:00,064: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:10:00,024: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:11:00,040: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:11:00,045: INFO/MainProcess] Task tasks.reset_stale_tasks[fc345343-5dd2-4c30-bafc-860d63ce5063] received
+[2026-03-17 12:11:00,046: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:11:00,061: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[fc345343-5dd2-4c30-bafc-860d63ce5063] succeeded in 0.015044541971292347s: {'status': 'completed', 'timestamp': '2026-03-17T12:11:00.059850'}
+[2026-03-17 12:12:00,099: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:12:00,103: INFO/MainProcess] Task tasks.reset_stale_tasks[0da53c11-fe7c-4f3f-9288-66b35e4bda04] received
+[2026-03-17 12:12:00,104: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:12:00,117: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[0da53c11-fe7c-4f3f-9288-66b35e4bda04] succeeded in 0.013505542010534555s: {'status': 'completed', 'timestamp': '2026-03-17T12:12:00.116206'}
+[2026-03-17 12:13:00,033: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:13:00,037: INFO/MainProcess] Task tasks.reset_stale_tasks[b882d95f-82cb-4163-9bd6-c54e83b90ec3] received
+[2026-03-17 12:13:00,039: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:13:00,050: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[b882d95f-82cb-4163-9bd6-c54e83b90ec3] succeeded in 0.011636166018433869s: {'status': 'completed', 'timestamp': '2026-03-17T12:13:00.049097'}
+[2026-03-17 12:14:00,109: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:15:00,088: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:15:00,094: INFO/MainProcess] Task tasks.reset_stale_tasks[0e65ce9f-e5cc-46f0-9b15-b43738224acd] received
+[2026-03-17 12:15:00,095: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:15:00,110: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[0e65ce9f-e5cc-46f0-9b15-b43738224acd] succeeded in 0.015185333031695336s: {'status': 'completed', 'timestamp': '2026-03-17T12:15:00.109087'}
+[2026-03-17 12:16:00,068: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:16:00,075: INFO/MainProcess] Task tasks.reset_stale_tasks[01beba5b-4e5e-4997-b795-5f2a92f1bd5c] received
+[2026-03-17 12:16:00,078: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:16:00,094: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[01beba5b-4e5e-4997-b795-5f2a92f1bd5c] succeeded in 0.017544540984090418s: {'status': 'completed', 'timestamp': '2026-03-17T12:16:00.093474'}
+[2026-03-17 12:17:00,130: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:17:00,135: INFO/MainProcess] Task tasks.reset_stale_tasks[b6cef327-9a52-4ec6-b75b-b96870f6e6a4] received
+[2026-03-17 12:17:00,136: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:17:00,149: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[b6cef327-9a52-4ec6-b75b-b96870f6e6a4] succeeded in 0.013442625000607222s: {'status': 'completed', 'timestamp': '2026-03-17T12:17:00.148501'}
+[2026-03-17 12:18:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:18:00,004: INFO/MainProcess] Task tasks.reset_stale_tasks[c49540d3-1f0f-4b4a-84f6-ebbcede3fb38] received
+[2026-03-17 12:18:00,005: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:18:00,019: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[c49540d3-1f0f-4b4a-84f6-ebbcede3fb38] succeeded in 0.014529375010170043s: {'status': 'completed', 'timestamp': '2026-03-17T12:18:00.017873'}
+[2026-03-17 12:19:00,034: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:19:00,038: INFO/MainProcess] Task tasks.reset_stale_tasks[8e22d4a2-9426-4518-aea8-abcab5f29e21] received
+[2026-03-17 12:19:00,040: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:19:00,051: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[8e22d4a2-9426-4518-aea8-abcab5f29e21] succeeded in 0.01204083301126957s: {'status': 'completed', 'timestamp': '2026-03-17T12:19:00.050310'}
+[2026-03-17 12:20:00,066: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:20:00,070: INFO/MainProcess] Task tasks.reset_stale_tasks[418e815d-dba2-455c-a09b-cb3a6c9d732e] received
+[2026-03-17 12:20:00,071: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:20:00,083: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[418e815d-dba2-455c-a09b-cb3a6c9d732e] succeeded in 0.012315333995502442s: {'status': 'completed', 'timestamp': '2026-03-17T12:20:00.082448'}
+[2026-03-17 12:21:00,045: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:21:00,048: INFO/MainProcess] Task tasks.reset_stale_tasks[dcfcedf8-40e0-45f1-a627-ed6dc8b3bf40] received
+[2026-03-17 12:21:00,050: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:21:00,062: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[dcfcedf8-40e0-45f1-a627-ed6dc8b3bf40] succeeded in 0.012434625008609146s: {'status': 'completed', 'timestamp': '2026-03-17T12:21:00.061142'}
+[2026-03-17 12:22:00,132: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:22:00,136: INFO/MainProcess] Task tasks.reset_stale_tasks[7bbdd25b-9c23-4330-b0cb-2333817877fd] received
+[2026-03-17 12:22:00,138: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:22:00,150: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[7bbdd25b-9c23-4330-b0cb-2333817877fd] succeeded in 0.013045249972492456s: {'status': 'completed', 'timestamp': '2026-03-17T12:22:00.149563'}
+[2026-03-17 12:23:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:23:00,003: INFO/MainProcess] Task tasks.reset_stale_tasks[91b5b4a6-63f7-4cc0-8df1-a469500a4ec4] received
+[2026-03-17 12:23:00,005: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:23:00,019: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[91b5b4a6-63f7-4cc0-8df1-a469500a4ec4] succeeded in 0.015288790978956968s: {'status': 'completed', 'timestamp': '2026-03-17T12:23:00.017983'}
+[2026-03-17 12:24:00,042: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:24:00,046: INFO/MainProcess] Task tasks.reset_stale_tasks[c92e1d78-ad82-49bf-9775-2901baa7b36f] received
+[2026-03-17 12:24:00,047: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:24:00,059: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[c92e1d78-ad82-49bf-9775-2901baa7b36f] succeeded in 0.013247499999124557s: {'status': 'completed', 'timestamp': '2026-03-17T12:24:00.059025'}
+[2026-03-17 12:25:00,002: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:25:00,006: INFO/MainProcess] Task tasks.reset_stale_tasks[23a3a81e-13e7-4d2d-b4af-2c70518c2eab] received
+[2026-03-17 12:25:00,007: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:25:00,020: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[23a3a81e-13e7-4d2d-b4af-2c70518c2eab] succeeded in 0.013835374964401126s: {'status': 'completed', 'timestamp': '2026-03-17T12:25:00.019319'}
+[2026-03-17 12:26:00,009: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:26:00,013: INFO/MainProcess] Task tasks.reset_stale_tasks[1418e52a-b264-4047-b547-94520c50cd46] received
+[2026-03-17 12:26:00,014: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:26:00,027: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[1418e52a-b264-4047-b547-94520c50cd46] succeeded in 0.01319858297938481s: {'status': 'completed', 'timestamp': '2026-03-17T12:26:00.026092'}
+[2026-03-17 12:27:00,001: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:27:00,004: INFO/MainProcess] Task tasks.reset_stale_tasks[3a94ba59-437c-4f30-9a28-3b8cb1861873] received
+[2026-03-17 12:27:00,005: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:27:00,019: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[3a94ba59-437c-4f30-9a28-3b8cb1861873] succeeded in 0.015015708981081843s: {'status': 'completed', 'timestamp': '2026-03-17T12:27:00.018714'}
+[2026-03-17 12:28:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:29:00,024: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:30:00,075: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:31:00,127: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:32:00,113: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:33:00,077: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:34:00,111: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:35:00,138: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:35:00,142: INFO/MainProcess] Task tasks.reset_stale_tasks[d953a22d-64f1-4365-b3cb-0acfa8d36419] received
+[2026-03-17 12:35:00,144: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:35:00,158: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[d953a22d-64f1-4365-b3cb-0acfa8d36419] succeeded in 0.014774916984606534s: {'status': 'completed', 'timestamp': '2026-03-17T12:35:00.157265'}
+[2026-03-17 12:36:00,135: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:36:00,139: INFO/MainProcess] Task tasks.reset_stale_tasks[095b19ff-3d6b-4121-805b-f3ad838ed433] received
+[2026-03-17 12:36:00,141: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:36:00,153: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[095b19ff-3d6b-4121-805b-f3ad838ed433] succeeded in 0.013295374985318631s: {'status': 'completed', 'timestamp': '2026-03-17T12:36:00.152364'}
+[2026-03-17 12:37:00,046: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:37:00,049: INFO/MainProcess] Task tasks.reset_stale_tasks[309184ab-74ed-46e6-a59c-94a1e12b5691] received
+[2026-03-17 12:37:00,050: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:37:00,061: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[309184ab-74ed-46e6-a59c-94a1e12b5691] succeeded in 0.011448875011410564s: {'status': 'completed', 'timestamp': '2026-03-17T12:37:00.060574'}
+[2026-03-17 12:38:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:38:00,003: INFO/MainProcess] Task tasks.reset_stale_tasks[82032eba-6c92-4da5-b30f-1fd8d045257c] received
+[2026-03-17 12:38:00,005: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:38:00,017: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[82032eba-6c92-4da5-b30f-1fd8d045257c] succeeded in 0.013486624986398965s: {'status': 'completed', 'timestamp': '2026-03-17T12:38:00.016443'}
+[2026-03-17 12:39:00,032: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:39:00,035: INFO/MainProcess] Task tasks.reset_stale_tasks[0c9d19b7-c57f-4ec9-bd19-0b5db567c62b] received
+[2026-03-17 12:39:00,037: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:39:00,048: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[0c9d19b7-c57f-4ec9-bd19-0b5db567c62b] succeeded in 0.011580375023186207s: {'status': 'completed', 'timestamp': '2026-03-17T12:39:00.047052'}
+[2026-03-17 12:40:00,130: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:40:00,134: INFO/MainProcess] Task tasks.reset_stale_tasks[d22b8843-e811-4436-9cd9-12b2784aa036] received
+[2026-03-17 12:40:00,136: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:40:00,147: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[d22b8843-e811-4436-9cd9-12b2784aa036] succeeded in 0.012413499993272126s: {'status': 'completed', 'timestamp': '2026-03-17T12:40:00.146647'}
+[2026-03-17 12:41:00,114: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:42:00,131: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:43:00,139: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:44:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:45:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:46:00,048: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:47:00,039: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:47:00,043: INFO/MainProcess] Task tasks.reset_stale_tasks[32ce7adb-db39-44ee-98f3-f230cc40fce1] received
+[2026-03-17 12:47:00,045: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:47:00,056: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[32ce7adb-db39-44ee-98f3-f230cc40fce1] succeeded in 0.011644583020824939s: {'status': 'completed', 'timestamp': '2026-03-17T12:47:00.055367'}
+[2026-03-17 12:48:00,088: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:48:00,093: INFO/MainProcess] Task tasks.reset_stale_tasks[23e6e393-18d9-4c19-b3da-648c847bd73a] received
+[2026-03-17 12:48:00,094: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:48:00,109: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[23e6e393-18d9-4c19-b3da-648c847bd73a] succeeded in 0.015545041998848319s: {'status': 'completed', 'timestamp': '2026-03-17T12:48:00.108362'}
+[2026-03-17 12:49:00,003: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:49:00,007: INFO/MainProcess] Task tasks.reset_stale_tasks[f57b7562-bcca-4c66-bf44-dab651201097] received
+[2026-03-17 12:49:00,008: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:49:00,022: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[f57b7562-bcca-4c66-bf44-dab651201097] succeeded in 0.014682874956633896s: {'status': 'completed', 'timestamp': '2026-03-17T12:49:00.020920'}
+[2026-03-17 12:50:00,087: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:50:00,092: INFO/MainProcess] Task tasks.reset_stale_tasks[b74d5520-1370-465f-bb0b-24b20b7e7566] received
+[2026-03-17 12:50:00,093: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:50:00,107: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[b74d5520-1370-465f-bb0b-24b20b7e7566] succeeded in 0.014651666977442801s: {'status': 'completed', 'timestamp': '2026-03-17T12:50:00.106861'}
+[2026-03-17 12:51:00,136: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:51:00,140: INFO/MainProcess] Task tasks.reset_stale_tasks[33a6a87c-0efb-4d18-b2af-7aeef28cb433] received
+[2026-03-17 12:51:00,141: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:51:00,154: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[33a6a87c-0efb-4d18-b2af-7aeef28cb433] succeeded in 0.013527417031582445s: {'status': 'completed', 'timestamp': '2026-03-17T12:51:00.153431'}
+[2026-03-17 12:52:00,136: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:52:00,140: INFO/MainProcess] Task tasks.reset_stale_tasks[affd0aea-7874-4834-8b9c-b67f2d9a6862] received
+[2026-03-17 12:52:00,141: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:52:00,155: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[affd0aea-7874-4834-8b9c-b67f2d9a6862] succeeded in 0.014391499978955835s: {'status': 'completed', 'timestamp': '2026-03-17T12:52:00.154370'}
+[2026-03-17 12:53:00,078: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:54:00,072: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:55:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:56:00,114: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:57:00,014: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:58:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:59:00,004: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 12:59:00,008: INFO/MainProcess] Task tasks.reset_stale_tasks[82b823e4-44bc-4fd8-a209-65430d81652a] received
+[2026-03-17 12:59:00,009: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 12:59:00,023: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[82b823e4-44bc-4fd8-a209-65430d81652a] succeeded in 0.013842249987646937s: {'status': 'completed', 'timestamp': '2026-03-17T12:59:00.021661'}
+[2026-03-17 18:00:00,118: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:00:00,130: INFO/MainProcess] Task tasks.reset_stale_tasks[851eda70-d1a4-4c76-a79b-9cda7da4faef] received
+[2026-03-17 18:00:00,136: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:00:00,246: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[851eda70-d1a4-4c76-a79b-9cda7da4faef] succeeded in 0.11241175001487136s: {'status': 'completed', 'timestamp': '2026-03-17T18:00:00.244111'}
+[2026-03-17 18:01:00,121: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:01:00,125: INFO/MainProcess] Task tasks.reset_stale_tasks[09fcbe3c-c83d-40ac-abc5-4de255200c8c] received
+[2026-03-17 18:01:00,126: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:01:00,138: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[09fcbe3c-c83d-40ac-abc5-4de255200c8c] succeeded in 0.012364624999463558s: {'status': 'completed', 'timestamp': '2026-03-17T18:01:00.137554'}
+[2026-03-17 18:02:00,049: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:03:00,072: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:04:00,138: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:05:00,128: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:06:00,141: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:07:00,035: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:08:00,020: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:08:00,024: INFO/MainProcess] Task tasks.reset_stale_tasks[f2108dda-0e19-4850-bfcc-53932929b998] received
+[2026-03-17 18:08:00,025: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:08:00,036: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[f2108dda-0e19-4850-bfcc-53932929b998] succeeded in 0.011233458993956447s: {'status': 'completed', 'timestamp': '2026-03-17T18:08:00.034735'}
+[2026-03-17 18:09:00,138: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:09:00,143: INFO/MainProcess] Task tasks.reset_stale_tasks[c59b2a19-6e04-4f18-8ad4-98a5fc810349] received
+[2026-03-17 18:09:00,145: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:09:00,155: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[c59b2a19-6e04-4f18-8ad4-98a5fc810349] succeeded in 0.011772500001825392s: {'status': 'completed', 'timestamp': '2026-03-17T18:09:00.155014'}
+[2026-03-17 18:10:00,086: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:10:00,090: INFO/MainProcess] Task tasks.reset_stale_tasks[85dfae10-9424-4b77-a923-20763a74d5fa] received
+[2026-03-17 18:10:00,092: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:10:00,106: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[85dfae10-9424-4b77-a923-20763a74d5fa] succeeded in 0.015263417037203908s: {'status': 'completed', 'timestamp': '2026-03-17T18:10:00.105643'}
+[2026-03-17 18:11:00,121: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:11:00,126: INFO/MainProcess] Task tasks.reset_stale_tasks[29b62aa9-9e2c-41e7-adca-3ee88a404fcc] received
+[2026-03-17 18:11:00,127: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:11:00,139: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[29b62aa9-9e2c-41e7-adca-3ee88a404fcc] succeeded in 0.01248700002906844s: {'status': 'completed', 'timestamp': '2026-03-17T18:11:00.138337'}
+[2026-03-17 18:12:00,123: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:12:00,128: INFO/MainProcess] Task tasks.reset_stale_tasks[ac382eb9-a157-4b6d-82de-bfcb8854fed2] received
+[2026-03-17 18:12:00,129: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:12:00,141: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[ac382eb9-a157-4b6d-82de-bfcb8854fed2] succeeded in 0.012458499986678362s: {'status': 'completed', 'timestamp': '2026-03-17T18:12:00.140402'}
+[2026-03-17 18:13:00,024: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:13:00,026: INFO/MainProcess] Task tasks.reset_stale_tasks[eccad538-5067-4a9c-ab3c-dc949396a74e] received
+[2026-03-17 18:13:00,027: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:13:00,039: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[eccad538-5067-4a9c-ab3c-dc949396a74e] succeeded in 0.01164841599529609s: {'status': 'completed', 'timestamp': '2026-03-17T18:13:00.038000'}
+[2026-03-17 18:14:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:15:00,072: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:16:00,135: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:17:00,081: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:18:00,076: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:19:00,077: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:20:00,044: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:21:00,136: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:22:00,059: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:23:00,077: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:24:00,067: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:25:00,111: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:26:00,126: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:27:00,127: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:28:00,115: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:29:00,005: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:29:00,009: INFO/MainProcess] Task tasks.reset_stale_tasks[feb8334f-2637-4690-9ecc-b89be7168069] received
+[2026-03-17 18:29:00,011: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:29:00,024: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[feb8334f-2637-4690-9ecc-b89be7168069] succeeded in 0.014324165997095406s: {'status': 'completed', 'timestamp': '2026-03-17T18:29:00.023170'}
+[2026-03-17 18:30:00,007: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:30:00,010: INFO/MainProcess] Task tasks.reset_stale_tasks[5ee20e93-3cbb-47d0-a8e7-622b473959a8] received
+[2026-03-17 18:30:00,012: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:30:00,026: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[5ee20e93-3cbb-47d0-a8e7-622b473959a8] succeeded in 0.014342666952870786s: {'status': 'completed', 'timestamp': '2026-03-17T18:30:00.024661'}
+[2026-03-17 18:31:00,137: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:31:00,142: INFO/MainProcess] Task tasks.reset_stale_tasks[01069439-b5c1-4ce8-aaf9-0028d1cc13f4] received
+[2026-03-17 18:31:00,144: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:31:00,157: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[01069439-b5c1-4ce8-aaf9-0028d1cc13f4] succeeded in 0.014380957989487797s: {'status': 'completed', 'timestamp': '2026-03-17T18:31:00.156704'}
+[2026-03-17 18:32:00,023: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:32:00,026: INFO/MainProcess] Task tasks.reset_stale_tasks[8b5de077-a5ca-4296-aa02-654c8a418fad] received
+[2026-03-17 18:32:00,027: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:32:00,039: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[8b5de077-a5ca-4296-aa02-654c8a418fad] succeeded in 0.01255499996477738s: {'status': 'completed', 'timestamp': '2026-03-17T18:32:00.038327'}
+[2026-03-17 18:33:00,121: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:33:00,125: INFO/MainProcess] Task tasks.reset_stale_tasks[8b8d5902-6795-4859-b700-81a283611da3] received
+[2026-03-17 18:33:00,127: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:33:00,141: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[8b8d5902-6795-4859-b700-81a283611da3] succeeded in 0.015075458970386535s: {'status': 'completed', 'timestamp': '2026-03-17T18:33:00.140535'}
+[2026-03-17 18:34:00,090: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:34:00,094: INFO/MainProcess] Task tasks.reset_stale_tasks[fb050f4b-1cc5-460d-86f5-707055f7dc60] received
+[2026-03-17 18:34:00,095: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:34:00,109: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[fb050f4b-1cc5-460d-86f5-707055f7dc60] succeeded in 0.01456237497041002s: {'status': 'completed', 'timestamp': '2026-03-17T18:34:00.108640'}
+[2026-03-17 18:35:00,139: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:35:00,144: INFO/MainProcess] Task tasks.reset_stale_tasks[17df2472-c78f-49b8-b2fb-5206a1c21c5c] received
+[2026-03-17 18:35:00,145: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:35:00,158: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[17df2472-c78f-49b8-b2fb-5206a1c21c5c] succeeded in 0.013901167025323957s: {'status': 'completed', 'timestamp': '2026-03-17T18:35:00.157685'}
+[2026-03-17 18:36:00,051: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:36:00,054: INFO/MainProcess] Task tasks.reset_stale_tasks[8be4eca5-097c-45b8-be47-2dd77dc96e30] received
+[2026-03-17 18:36:00,055: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:36:00,066: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[8be4eca5-097c-45b8-be47-2dd77dc96e30] succeeded in 0.01199183298740536s: {'status': 'completed', 'timestamp': '2026-03-17T18:36:00.065838'}
+[2026-03-17 18:37:00,130: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:37:00,133: INFO/MainProcess] Task tasks.reset_stale_tasks[2d3a1d66-548f-42be-b453-716d950cf124] received
+[2026-03-17 18:37:00,134: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:37:00,146: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[2d3a1d66-548f-42be-b453-716d950cf124] succeeded in 0.012591500009875745s: {'status': 'completed', 'timestamp': '2026-03-17T18:37:00.145723'}
+[2026-03-17 18:38:00,134: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:38:00,139: INFO/MainProcess] Task tasks.reset_stale_tasks[af515608-2a4e-4c21-8e3b-0b97edbf6863] received
+[2026-03-17 18:38:00,140: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:38:00,151: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[af515608-2a4e-4c21-8e3b-0b97edbf6863] succeeded in 0.011570625007152557s: {'status': 'completed', 'timestamp': '2026-03-17T18:38:00.150323'}
+[2026-03-17 18:39:00,064: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:39:00,069: INFO/MainProcess] Task tasks.reset_stale_tasks[3f2bb910-061e-4cd5-a946-99c1c2293f5a] received
+[2026-03-17 18:39:00,071: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:39:00,083: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[3f2bb910-061e-4cd5-a946-99c1c2293f5a] succeeded in 0.013162125018425286s: {'status': 'completed', 'timestamp': '2026-03-17T18:39:00.082652'}
+[2026-03-17 18:40:00,120: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:40:00,123: INFO/MainProcess] Task tasks.reset_stale_tasks[b51e2b8e-c513-4db4-b975-f4d69b4d2cd2] received
+[2026-03-17 18:40:00,124: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:40:00,133: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[b51e2b8e-c513-4db4-b975-f4d69b4d2cd2] succeeded in 0.010348208015784621s: {'status': 'completed', 'timestamp': '2026-03-17T18:40:00.132953'}
+[2026-03-17 18:41:00,139: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:41:00,143: INFO/MainProcess] Task tasks.reset_stale_tasks[28a10b63-0fd4-48c8-b76f-eeb4b781dc8a] received
+[2026-03-17 18:41:00,144: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:41:00,157: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[28a10b63-0fd4-48c8-b76f-eeb4b781dc8a] succeeded in 0.013810582982841879s: {'status': 'completed', 'timestamp': '2026-03-17T18:41:00.156597'}
+[2026-03-17 18:42:00,110: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:42:00,114: INFO/MainProcess] Task tasks.reset_stale_tasks[330b28c3-ad3e-4fe4-a80e-71f6776794e8] received
+[2026-03-17 18:42:00,116: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:42:00,127: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[330b28c3-ad3e-4fe4-a80e-71f6776794e8] succeeded in 0.01243408297887072s: {'status': 'completed', 'timestamp': '2026-03-17T18:42:00.126883'}
+[2026-03-17 18:43:00,060: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:44:00,138: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:45:00,109: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:46:00,069: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:47:00,132: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:48:00,010: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:49:00,036: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:50:00,139: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:51:00,101: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:51:00,105: INFO/MainProcess] Task tasks.reset_stale_tasks[6fa9b436-cd05-471e-b2e0-1178bc3d90f3] received
+[2026-03-17 18:51:00,107: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:51:00,121: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[6fa9b436-cd05-471e-b2e0-1178bc3d90f3] succeeded in 0.015169374994002283s: {'status': 'completed', 'timestamp': '2026-03-17T18:51:00.120445'}
+[2026-03-17 18:52:00,057: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:52:00,061: INFO/MainProcess] Task tasks.reset_stale_tasks[cc07fe3e-0df1-4daf-b48a-cb2891cb918a] received
+[2026-03-17 18:52:00,063: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:52:00,075: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[cc07fe3e-0df1-4daf-b48a-cb2891cb918a] succeeded in 0.01311091601382941s: {'status': 'completed', 'timestamp': '2026-03-17T18:52:00.074291'}
+[2026-03-17 18:53:00,136: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:53:00,140: INFO/MainProcess] Task tasks.reset_stale_tasks[fb21868f-3be6-4949-9557-31023462afe1] received
+[2026-03-17 18:53:00,142: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:53:00,153: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[fb21868f-3be6-4949-9557-31023462afe1] succeeded in 0.012296832981519401s: {'status': 'completed', 'timestamp': '2026-03-17T18:53:00.152494'}
+[2026-03-17 18:54:00,078: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:54:00,082: INFO/MainProcess] Task tasks.reset_stale_tasks[bd7719b0-74e2-47de-9ef2-0a122b26af31] received
+[2026-03-17 18:54:00,084: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:54:00,098: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[bd7719b0-74e2-47de-9ef2-0a122b26af31] succeeded in 0.014219083008356392s: {'status': 'completed', 'timestamp': '2026-03-17T18:54:00.096793'}
+[2026-03-17 18:55:00,148: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:55:00,152: INFO/MainProcess] Task tasks.reset_stale_tasks[1ab1764e-f0d0-419b-9238-16fe2367e515] received
+[2026-03-17 18:55:00,153: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:55:00,168: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[1ab1764e-f0d0-419b-9238-16fe2367e515] succeeded in 0.015419208037201315s: {'status': 'completed', 'timestamp': '2026-03-17T18:55:00.167072'}
+[2026-03-17 18:56:00,000: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:56:00,003: INFO/MainProcess] Task tasks.reset_stale_tasks[180f8191-4657-47a8-be4f-e52057b7b488] received
+[2026-03-17 18:56:00,004: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:56:00,019: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[180f8191-4657-47a8-be4f-e52057b7b488] succeeded in 0.015503792033996433s: {'status': 'completed', 'timestamp': '2026-03-17T18:56:00.017700'}
+[2026-03-17 18:57:00,034: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:57:00,038: INFO/MainProcess] Task tasks.reset_stale_tasks[9f7e0d78-375a-437d-bf5c-1b65d37f6f12] received
+[2026-03-17 18:57:00,040: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:57:00,054: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[9f7e0d78-375a-437d-bf5c-1b65d37f6f12] succeeded in 0.015122000011615455s: {'status': 'completed', 'timestamp': '2026-03-17T18:57:00.053627'}
+[2026-03-17 18:58:00,015: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:58:00,020: INFO/MainProcess] Task tasks.reset_stale_tasks[aa5c0745-d2aa-48cf-8bae-c86768c4f2fe] received
+[2026-03-17 18:58:00,023: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:58:00,034: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[aa5c0745-d2aa-48cf-8bae-c86768c4f2fe] succeeded in 0.011598499957472086s: {'status': 'completed', 'timestamp': '2026-03-17T18:58:00.032847'}
+[2026-03-17 18:59:00,139: INFO/Beat] Scheduler: Sending due task reset-stale-tasks (tasks.reset_stale_tasks)
+[2026-03-17 18:59:00,144: INFO/MainProcess] Task tasks.reset_stale_tasks[ad26934d-c3a1-4923-b520-998d190b31c0] received
+[2026-03-17 18:59:00,145: INFO/ForkPoolWorker-4] Resetting stale tasks
+[2026-03-17 18:59:00,158: INFO/ForkPoolWorker-4] Task tasks.reset_stale_tasks[ad26934d-c3a1-4923-b520-998d190b31c0] succeeded in 0.013750249985605478s: {'status': 'completed', 'timestamp': '2026-03-17T18:59:00.157636'}
