@@ -579,7 +579,6 @@ async function resolveShortLink(page, shortUrl) {
     if (shortUrl.includes('v.douyin.com')) {
       // Open the short link in a new tab to get the redirect
       const newPage = await page.context().newPage();
-
       try {
         // Navigate and wait for redirect
         await newPage.goto(shortUrl, {
@@ -597,21 +596,20 @@ async function resolveShortLink(page, shortUrl) {
         const finalVideoIdMatch = finalUrl.match(/video\/(\d+)/);
         const videoId = finalVideoIdMatch ? finalVideoIdMatch[1] : null;
 
-        await newPage.close();
-
         return {
           shortLink: shortUrl,
           videoId,
           fullLink: videoId ? `https://www.douyin.com/video/${videoId}` : finalUrl,
         };
       } catch (err) {
-        await newPage.close().catch(() => {});
         console.log(`    ⚠️ Could not resolve short link: ${err.message}`);
         return {
           shortLink: shortUrl,
           videoId: null,
           fullLink: shortUrl,
         };
+      } finally {
+        await newPage.close().catch(() => {});
       }
     }
 
@@ -820,9 +818,14 @@ async function scrapeVideo(page, videoIndex, options = {}) {
   video.videoId = stats.videoId || null;
   if (targetVideoId) {
     if (video.videoId && video.videoId !== targetVideoId) {
-      console.log(`  ⚠️  Detected video_id ${video.videoId}, overriding with target ${targetVideoId}`);
+      // Mismatch: page shows different video than URL (redirect/collection). Trust page to avoid wrong metadata association.
+      console.log(`  ⚠️  URL targets ${targetVideoId} but page shows ${video.videoId}; using page video_id to avoid wrong metadata association`);
+      // Don't override - keep video.videoId from page
+    } else if (!video.videoId) {
+      // Page didn't extract videoId, use target as fallback
+      video.videoId = targetVideoId;
     }
-    video.videoId = targetVideoId;
+    // else: they match, no change needed
   }
   if (video.videoId) {
     console.log(`  🆔 Video ID: ${video.videoId}`);
