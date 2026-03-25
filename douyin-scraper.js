@@ -20,7 +20,7 @@
  * - SAVE_TO_FILE: Set to 'true' to save JSON/Markdown files (default: false, database only)
  * - BROWSER_USER_DATA_DIR: Chrome profile directory (default: OS temp/douyin-scraper-user-data)
  * - PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD: PostgreSQL connection settings
- * - MIN_COMMENTS_THRESHOLD: Minimum comments threshold (default: 5000)
+ * - MIN_COMMENTS_THRESHOLD: Minimum comments threshold (default: 3000)
  */
 
 const { chromium } = require('patchright');
@@ -37,8 +37,7 @@ const CONFIG = {
   SAVE_TO_FILE: process.env.SAVE_TO_FILE === 'true', // Default: false (database only)
   WAIT_TIMEOUT: 5000,
   MAX_COMMENTS: 10,
-  // Keep legacy default behavior for feed scraping.
-  MIN_COMMENTS_THRESHOLD: Math.max(0, parseInt(process.env.MIN_COMMENTS_THRESHOLD || '5000', 10) || 5000),
+  MIN_COMMENTS_THRESHOLD: Math.max(0, parseInt(process.env.MIN_COMMENTS_THRESHOLD || '3000', 10) || 3000),
   // Human-like behavior settings
   HUMAN_DELAY: {
     MIN_WAIT: 800,      // Minimum wait time in ms
@@ -50,12 +49,12 @@ const CONFIG = {
     TYPE_MIN: 30,       // Min delay between keystrokes
     TYPE_MAX: 120,      // Max delay between keystrokes
   },
-  // PostgreSQL configuration
+  // PostgreSQL configuration (PGUSER defaults to current OS user for macOS Homebrew compatibility)
   POSTGRES: {
     host: process.env.PGHOST || 'localhost',
     port: parseInt(process.env.PGPORT || '5432', 10),
     database: process.env.PGDATABASE || 'douyin',
-    user: process.env.PGUSER || 'postgres',
+    user: process.env.PGUSER || process.env.USER || 'postgres',
     password: process.env.PGPASSWORD || 'postgres',
   },
 };
@@ -724,8 +723,8 @@ async function scrapeVideo(page, videoIndex, options = {}) {
     await page.waitForSelector(SELECTORS.activeVideo, { timeout: 15000 });
   } catch (_err) {
     if (!targetUrl) {
-      // In legacy feed mode, keep old strict behavior to avoid silent behavior changes.
-      throw _err;
+      console.log(`  ⏭️  Timeout waiting for feed-active-video, skipping to next`);
+      return null;
     }
     // Target URL pages may not have feed-active-video.
     usePageScope = true;
