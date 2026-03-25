@@ -9,13 +9,18 @@
  * - Comments with like counts
  * - Share link
  *
- * Usage: node douyin-scraper.js [videoCount]
- * Example: node douyin-scraper.js 3
+ * Usage:
+ *   node douyin-scraper.js [videoCount]
+ *   node douyin-scraper.js --url <douyin_video_url>
+ * Example:
+ *   node douyin-scraper.js 3
+ *   node douyin-scraper.js --url https://www.douyin.com/video/1234567890
  *
  * Environment Variables:
  * - SAVE_TO_FILE: Set to 'true' to save JSON/Markdown files (default: false, database only)
  * - BROWSER_USER_DATA_DIR: Chrome profile directory (default: OS temp/douyin-scraper-user-data)
  * - PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD: PostgreSQL connection settings
+ * - MIN_COMMENTS_THRESHOLD: Minimum comments threshold (default: 3000)
  */
 
 const { chromium } = require('patchright');
@@ -27,13 +32,12 @@ const { Pool } = require('pg');
 // Configuration
 const CONFIG = {
   DOUYIN_URL: 'https://www.douyin.com/?recommend=1',
-  USER_DATA_DIR: process.env.BROWSER_USER_DATA_DIR || path.join(__dirname, 'browser-profile'),
+  USER_DATA_DIR: process.env.BROWSER_USER_DATA_DIR || path.join(os.tmpdir(), 'douyin-scraper-user-data'),
   OUTPUT_DIR: path.join(process.cwd(), 'output'),
   SAVE_TO_FILE: process.env.SAVE_TO_FILE === 'true', // Default: false (database only)
   WAIT_TIMEOUT: 5000,
-  ACTIVE_VIDEO_TIMEOUT: 25000,
   MAX_COMMENTS: 10,
-  MIN_COMMENTS_THRESHOLD: 3000,
+  MIN_COMMENTS_THRESHOLD: Math.max(0, parseInt(process.env.MIN_COMMENTS_THRESHOLD || '3000', 10) || 3000),
   // Human-like behavior settings
   HUMAN_DELAY: {
     MIN_WAIT: 800,      // Minimum wait time in ms
@@ -45,7 +49,7 @@ const CONFIG = {
     TYPE_MIN: 30,       // Min delay between keystrokes
     TYPE_MAX: 120,      // Max delay between keystrokes
   },
-  // PostgreSQL configuration (PGUSER defaults to current user on macOS Homebrew)
+  // PostgreSQL configuration (PGUSER defaults to current OS user for macOS Homebrew compatibility)
   POSTGRES: {
     host: process.env.PGHOST || 'localhost',
     port: parseInt(process.env.PGPORT || '5432', 10),
@@ -410,6 +414,16 @@ function formatNumber(num) {
   return num.toString();
 }
 
+function sanitizeAuthorName(raw) {
+  const text = (raw || '').trim();
+  if (!text) return '';
+  const blocked = new Set([
+    '我的', '推荐', '关注', '朋友', '直播', '放映厅', '短剧', '搜索', '客户端', '通知', '私信', '投稿',
+  ]);
+  if (blocked.has(text)) return '';
+  return text.replace(/^@+/, '').trim();
+}
+
 /**
  * Capture the currently active video so later actions stay bound to one card.
  */
@@ -544,6 +558,76 @@ async function extractComments(page, maxComments = CONFIG.MAX_COMMENTS) {
 }
 
 /**
+ * Resolve short URL to get the true video link
+ */
+async function resolveShortLink(page, shortUrl) {
+  if (!shortUrl) return null;
+
+  try {
+    // If it's already a full douyin.com/video URL, extract video ID
+    const videoIdMatch = shortUrl.match(/douyin\.com\/video\/(\d+)/);
+    if (videoIdMatch) {
+      return {
+        shortLink: shortUrl,
+        videoId: videoIdMatch[1],
+        fullLink: `https://www.douyin.com/video/${videoIdMatch[1]}`,
+      };
+    }
+
+    // If it's a v.douyin.com short link, we need to follow the redirect
+    if (shortUrl.includes('v.douyin.com')) {
+      // Open the short link in a new tab to get the redirect
+      const newPage = await page.context().newPage();
+      try {
+        // Navigate and wait for redirect
+        await newPage.goto(shortUrl, {
+          waitUntil: 'domcontentloaded',
+          timeout: 15000,
+        });
+
+        // Wait a bit for any JS redirects
+        await humanWait(1000, 2000);
+
+        // Get the final URL
+        const finalUrl = newPage.url();
+
+        // Extract video ID from final URL
+        const finalVideoIdMatch = finalUrl.match(/video\/(\d+)/);
+        const videoId = finalVideoIdMatch ? finalVideoIdMatch[1] : null;
+
+        return {
+          shortLink: shortUrl,
+          videoId,
+          fullLink: videoId ? `https://www.douyin.com/video/${videoId}` : finalUrl,
+        };
+      } catch (err) {
+        console.log(`    ⚠️ Could not resolve short link: ${err.message}`);
+        return {
+          shortLink: shortUrl,
+          videoId: null,
+          fullLink: shortUrl,
+        };
+      } finally {
+        await newPage.close().catch(() => {});
+      }
+    }
+
+    return {
+      shortLink: shortUrl,
+      videoId: null,
+      fullLink: shortUrl,
+    };
+  } catch (error) {
+    console.log(`    ⚠️ Error resolving link: ${error.message}`);
+    return {
+      shortLink: shortUrl,
+      videoId: null,
+      fullLink: shortUrl,
+    };
+  }
+}
+
+/**
  * Get share link by clicking copy button
  */
 async function getShareLink(page) {
@@ -617,7 +701,10 @@ async function getShareLink(page) {
 /**
  * Scrape a single video
  */
-async function scrapeVideo(page, videoIndex) {
+async function scrapeVideo(page, videoIndex, options = {}) {
+  const { targetUrl = '' } = options;
+  const targetUrlText = String(targetUrl || '');
+  const targetVideoId = (targetUrlText.match(/video\/(\d+)/) || [null, null])[1];
   console.log(`\n📹 Scraping video #${videoIndex + 1}...`);
 
   const video = {
@@ -630,15 +717,25 @@ async function scrapeVideo(page, videoIndex) {
 
   // Wait for video to load (human-like random wait)
   await simulateReading(1500, 3000);
+  let activeVideo = page.locator(SELECTORS.activeVideo).first();
+  let usePageScope = false;
   try {
-    await page.waitForSelector(SELECTORS.activeVideo, { timeout: CONFIG.ACTIVE_VIDEO_TIMEOUT });
-  } catch (err) {
-    console.log(`  ⏭️  Timeout waiting for feed-active-video, skipping to next`);
-    return null;
+    await page.waitForSelector(SELECTORS.activeVideo, { timeout: 15000 });
+  } catch (_err) {
+    if (!targetUrl) {
+      console.log(`  ⏭️  Timeout waiting for feed-active-video, skipping to next`);
+      return null;
+    }
+    // Target URL pages may not have feed-active-video.
+    usePageScope = true;
+    activeVideo = page.locator('body').first();
+    // On detail pages the <video> element may exist but not be "visible" to Playwright.
+    // Continue as long as core metadata UI is present.
+    await page.waitForSelector(SELECTORS.videoTitle, { timeout: 15000, state: 'attached' }).catch(async () => {
+      await page.waitForSelector(SELECTORS.commentButton, { timeout: 15000, state: 'attached' });
+    });
+    console.log('  ℹ️ feed-active-video not found, fallback to page-level selectors');
   }
-
-  // Get the active video container to scope our selectors
-  const activeVideo = page.locator(SELECTORS.activeVideo).first();
 
   console.log('  ⏸️  Pausing current video...');
   const pauseResult = await pauseActiveVideo(activeVideo);
@@ -648,19 +745,12 @@ async function scrapeVideo(page, videoIndex) {
     console.log('  ⚠️  Video element not found; continuing');
   }
 
-  // Check if comment count button exists before extracting stats
-  const commentButtonExists = (await activeVideo.locator(SELECTORS.commentButton).count()) > 0;
-  if (!commentButtonExists) {
-    console.log('  ⏭️  Skipping: comment button not found');
-    return null;
-  }
-
   // Extract basic stats
   console.log('  📊 Extracting video stats...');
   const stats = await getActiveVideoSnapshot(activeVideo);
   video.stats = {
     title: stats.title,
-    author: stats.author,
+    author: sanitizeAuthorName(stats.author),
     likes: parseChineseNumber(stats.likes),
     likesDisplay: stats.likes,
     comments: parseChineseNumber(stats.comments),
@@ -671,19 +761,77 @@ async function scrapeVideo(page, videoIndex) {
     sharesDisplay: stats.shares,
   };
 
+  // Extra metadata from detail/feed page text and video element.
+  const extraMeta = await page.evaluate(() => {
+    const bodyText = document.body?.innerText || '';
+    const publishMatch = bodyText.match(/发布时间[：:]\s*([0-9]{4}-[0-9]{2}-[0-9]{2}\s*[0-9]{2}:[0-9]{2})/);
+    const videoEl = document.querySelector('video');
+    let duration = 0;
+    if (videoEl && Number.isFinite(videoEl.duration) && videoEl.duration > 0) {
+      duration = Math.round(videoEl.duration);
+    }
+    return {
+      publishTime: publishMatch ? publishMatch[1] : '',
+      durationSeconds: duration,
+    };
+  });
+  video.stats.publishTime = extraMeta.publishTime || '';
+  video.stats.durationSeconds = extraMeta.durationSeconds || 0;
+
+  // Detail-page fallback: sometimes selector-based title/author are empty.
+  if (!video.stats.title || !video.stats.author) {
+    const detailMeta = await page.evaluate(() => {
+      const titleFromDom =
+        document.querySelector('[data-e2e="video-desc"]')?.textContent?.trim() ||
+        document.querySelector('h1')?.textContent?.trim() ||
+        '';
+      const titleFromDoc = (document.title || '').replace(/\s*-\s*抖音\s*$/, '').trim();
+      const author =
+        document.querySelector('[data-e2e="feed-video-nickname"]')?.textContent?.trim() ||
+        document.querySelector('[data-e2e="video-author-name"]')?.textContent?.trim() ||
+        document.querySelector('a[href*="/user/"] span')?.textContent?.trim() ||
+        '';
+      return { title: titleFromDom || titleFromDoc || '', author };
+    });
+    if (!video.stats.title && detailMeta.title) {
+      video.stats.title = detailMeta.title;
+    }
+    if (!video.stats.author && detailMeta.author) {
+      video.stats.author = detailMeta.author;
+    }
+  }
+  video.stats.author = sanitizeAuthorName(video.stats.author);
+
   console.log(`  📝 Title: ${video.stats.title?.substring(0, 50)}...`);
   console.log(`  👤 Author: ${video.stats.author}`);
   console.log(`  ❤️  Likes: ${video.stats.likesDisplay}`);
   console.log(`  💬 Comments: ${video.stats.commentsDisplay}`);
+  if (video.stats.publishTime) {
+    console.log(`  🕒 Publish time: ${video.stats.publishTime}`);
+  }
+  if (video.stats.durationSeconds > 0) {
+    console.log(`  ⏱️  Duration: ${video.stats.durationSeconds}s`);
+  }
 
   const expectedVideoSignature = buildVideoSignature(stats);
   video.videoId = stats.videoId || null;
+  if (targetVideoId) {
+    if (video.videoId && video.videoId !== targetVideoId) {
+      // Mismatch: page shows different video than URL (redirect/collection). Trust page to avoid wrong metadata association.
+      console.log(`  ⚠️  URL targets ${targetVideoId} but page shows ${video.videoId}; using page video_id to avoid wrong metadata association`);
+      // Don't override - keep video.videoId from page
+    } else if (!video.videoId) {
+      // Page didn't extract videoId, use target as fallback
+      video.videoId = targetVideoId;
+    }
+    // else: they match, no change needed
+  }
   if (video.videoId) {
     console.log(`  🆔 Video ID: ${video.videoId}`);
   }
 
-  // If below threshold, skip without opening panels — main loop will swipe to next.
-  if (video.stats.comments < CONFIG.MIN_COMMENTS_THRESHOLD) {
+  // Optional threshold gate (disabled by default).
+  if (!targetUrlText && CONFIG.MIN_COMMENTS_THRESHOLD > 0 && video.stats.comments < CONFIG.MIN_COMMENTS_THRESHOLD) {
     console.log(`  ⏭️  Skipping: comments (${video.stats.comments}) < ${CONFIG.MIN_COMMENTS_THRESHOLD}`);
     return null;
   }
@@ -694,16 +842,22 @@ async function scrapeVideo(page, videoIndex) {
   // Comments (stay on current video, no swipe)
   console.log('  💬 Opening comments...');
   try {
-    await assertSameActiveVideo(page, expectedVideoSignature, 'before opening comments');
+    if (!usePageScope) {
+      await assertSameActiveVideo(page, expectedVideoSignature, 'before opening comments');
+    }
     const commentButton = activeVideo.locator(SELECTORS.commentButton).first();
     if (await commentButton.count() > 0) {
       await humanHoverAndClick(page, commentButton, { timeout: 5000 });
       await humanWait(1500, 2500);
-      await assertSameActiveVideo(page, expectedVideoSignature, 'after opening comments');
+      if (!usePageScope) {
+        await assertSameActiveVideo(page, expectedVideoSignature, 'after opening comments');
+      }
 
       await page.waitForSelector(SELECTORS.commentList, { timeout: 5000 }).catch(() => {});
       await simulateReading(600, 1200);
-      await assertSameActiveVideo(page, expectedVideoSignature, 'before extracting comments');
+      if (!usePageScope) {
+        await assertSameActiveVideo(page, expectedVideoSignature, 'before extracting comments');
+      }
 
       video.comments = await extractComments(page);
       console.log(`  📝 Found ${video.comments.length} comments`);
@@ -713,6 +867,18 @@ async function scrapeVideo(page, videoIndex) {
     }
   } catch (err) {
     console.log(`  ⚠️  Could not open comments: ${err.message}`);
+    if (usePageScope) {
+      // Detail page often renders comments directly without opening panel.
+      try {
+        const directComments = await extractComments(page);
+        if (directComments.length > 0) {
+          video.comments = directComments;
+          console.log(`  📝 Fallback comments from detail page: ${video.comments.length}`);
+        }
+      } catch (_e) {
+        // ignore
+      }
+    }
   }
 
   await humanWait(400, 900);
@@ -720,21 +886,31 @@ async function scrapeVideo(page, videoIndex) {
   // Share link (still on current video, no swipe)
   console.log('  🔗 Getting share link...');
   try {
-    await assertSameActiveVideo(page, expectedVideoSignature, 'before opening share panel');
+    if (!usePageScope) {
+      await assertSameActiveVideo(page, expectedVideoSignature, 'before opening share panel');
+    }
     const shareButton = activeVideo.locator(SELECTORS.shareButton).first();
     if (await shareButton.count() > 0) {
       await humanHoverAndClick(page, shareButton, { timeout: 5000 });
       await humanWait(1200, 2000);
-      await assertSameActiveVideo(page, expectedVideoSignature, 'after opening share panel');
+      if (!usePageScope) {
+        await assertSameActiveVideo(page, expectedVideoSignature, 'after opening share panel');
+      }
 
       const rawShareLink = await getShareLink(page);
 
       if (rawShareLink) {
-        console.log(`  🔗 Short link: ${rawShareLink}`);
-        video.shortLink = rawShareLink;
-        video.shareLink = video.videoId
-          ? `https://www.douyin.com/video/${video.videoId}`
-          : rawShareLink;
+        console.log(`  🔗 Raw link: ${rawShareLink}`);
+        const resolvedLink = await resolveShortLink(page, rawShareLink);
+        video.shareLink = resolvedLink.fullLink;
+        video.shortLink = resolvedLink.shortLink;
+        if (resolvedLink.videoId) {
+          video.videoId = resolvedLink.videoId;
+        }
+        console.log(`  🔗 True link: ${video.shareLink}`);
+        if (video.videoId) {
+          console.log(`  🆔 Video ID: ${video.videoId}`);
+        }
       } else {
         console.log(`  🔗 Share link: Not found`);
         if (video.videoId) {
@@ -749,6 +925,15 @@ async function scrapeVideo(page, videoIndex) {
     }
   } catch (err) {
     console.log(`  ⚠️  Could not get share link: ${err.message}`);
+    if (video.videoId) {
+      video.shareLink = `https://www.douyin.com/video/${video.videoId}`;
+      video.shortLink = video.shareLink;
+      console.log(`  🔗 Fallback link after share failure: ${video.shareLink}`);
+    } else if (targetUrl) {
+      video.shareLink = targetUrl;
+      video.shortLink = targetUrl;
+      console.log(`  🔗 Fallback link after share failure: ${video.shareLink}`);
+    }
   }
 
   return video;
@@ -837,10 +1022,41 @@ async function saveVideoFiles(video, outputDir) {
  * Main scraper function
  */
 async function main() {
-  const videoCount = Math.min(100, Math.max(1, parseInt(process.argv[2], 10) || 100));
+  const args = process.argv.slice(2);
+  let targetUrl = null;
+  let videoCount = 1;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--url' && i + 1 < args.length) {
+      targetUrl = args[i + 1];
+      i += 1;
+      continue;
+    }
+    if (/^https?:\/\//.test(arg) && !targetUrl) {
+      targetUrl = arg;
+      continue;
+    }
+    const maybeCount = parseInt(arg, 10);
+    if (!Number.isNaN(maybeCount) && maybeCount > 0) {
+      videoCount = maybeCount;
+    }
+  }
+
+  if (targetUrl) {
+    videoCount = 1;
+  }
 
   console.log('🎬 Douyin Video Scraper');
-  console.log(`📊 Will scrape ${videoCount} video(s) with >= ${CONFIG.MIN_COMMENTS_THRESHOLD} comments`);
+  if (targetUrl) {
+    console.log(`🎯 Target URL mode: ${targetUrl}`);
+  } else {
+    if (CONFIG.MIN_COMMENTS_THRESHOLD > 0) {
+      console.log(`📊 Will scrape ${videoCount} video(s) with >= ${CONFIG.MIN_COMMENTS_THRESHOLD} comments`);
+    } else {
+      console.log(`📊 Will scrape ${videoCount} video(s) (no comments threshold)`);
+    }
+  }
   console.log('');
 
   // Ensure output directory exists (only if saving to files)
@@ -893,41 +1109,48 @@ async function main() {
       await humanWait(2000, 3000);
     }
 
-    // Check current URL
-    const currentUrl = page.url();
-    console.log(`📍 Current URL: ${currentUrl}`);
+    if (targetUrl) {
+      console.log('🔗 Opening target video URL...');
+      await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await humanWait(2000, 3500);
+      console.log(`✅ Navigated to: ${page.url()}`);
+    } else {
+      // Check current URL
+      const currentUrl = page.url();
+      console.log(`📍 Current URL: ${currentUrl}`);
 
-    // Navigate to recommendation feed by clicking the button if not already there
-    if (!currentUrl.includes('recommend')) {
-      console.log('🔍 Looking for 推荐 button...');
-      try {
-        // Wait for the navigation menu to load
-        await page.waitForSelector('a:has-text("推荐")', { timeout: 10000 });
-        
-        // Find and click the 推荐 button
-        const recommendButton = page.locator('a:has-text("推荐")').first();
-        if (await recommendButton.count() > 0) {
-          console.log('🖱️  Clicking 推荐 button...');
-          await humanHoverAndClick(page, recommendButton, { timeout: 5000 });
+      // Navigate to recommendation feed by clicking the button if not already there
+      if (!currentUrl.includes('recommend')) {
+        console.log('🔍 Looking for 推荐 button...');
+        try {
+          // Wait for the navigation menu to load
+          await page.waitForSelector('a:has-text("推荐")', { timeout: 10000 });
           
-          // Wait for navigation
-          await humanWait(2000, 3000);
-          console.log(`✅ Navigated to: ${page.url()}`);
-        } else {
-          console.log('⚠️  推荐 button not found, trying direct navigation...');
+          // Find and click the 推荐 button
+          const recommendButton = page.locator('a:has-text("推荐")').first();
+          if (await recommendButton.count() > 0) {
+            console.log('🖱️  Clicking 推荐 button...');
+            await humanHoverAndClick(page, recommendButton, { timeout: 5000 });
+            
+            // Wait for navigation
+            await humanWait(2000, 3000);
+            console.log(`✅ Navigated to: ${page.url()}`);
+          } else {
+            console.log('⚠️  推荐 button not found, trying direct navigation...');
+            await page.goto(CONFIG.DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await humanWait(CONFIG.WAIT_TIMEOUT, CONFIG.WAIT_TIMEOUT + 2000);
+          }
+        } catch (err) {
+          console.log(`⚠️  Could not click 推荐 button: ${err.message}`);
+          console.log('   Trying direct navigation...');
           await page.goto(CONFIG.DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
           await humanWait(CONFIG.WAIT_TIMEOUT, CONFIG.WAIT_TIMEOUT + 2000);
         }
-      } catch (err) {
-        console.log(`⚠️  Could not click 推荐 button: ${err.message}`);
-        console.log('   Trying direct navigation...');
-        await page.goto(CONFIG.DOUYIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await humanWait(CONFIG.WAIT_TIMEOUT, CONFIG.WAIT_TIMEOUT + 2000);
+      } else {
+        console.log('✅ Already on recommendation feed');
+        // Small pause before starting
+        await humanWait(500, 1500);
       }
-    } else {
-      console.log('✅ Already on recommendation feed');
-      // Small pause before starting
-      await humanWait(500, 1500);
     }
 
     // Scrape videos
@@ -935,7 +1158,7 @@ async function main() {
     let videoIndex = 0;
 
     while (videos.length < videoCount) {
-      const video = await scrapeVideo(page, videoIndex);
+      const video = await scrapeVideo(page, videoIndex, { targetUrl });
 
       if (video) {
         // Video meets threshold, save it
@@ -954,8 +1177,8 @@ async function main() {
         console.log(`  📊 Progress: ${videos.length}/${videoCount} videos collected`);
       }
 
-      // Navigate to next video if we haven't collected enough
-      if (videos.length < videoCount) {
+      // Navigate to next video if we haven't collected enough (feed mode only)
+      if (!targetUrl && videos.length < videoCount) {
         console.log('\n⏭️  Moving to next video...');
 
         // Simulate finishing watching current video
@@ -973,7 +1196,7 @@ async function main() {
         console.log(`  ⏳ Waited ${scrollWait}ms for video transition`);
 
         // Wait for new video to become active
-        await page.waitForSelector(SELECTORS.activeVideo, { timeout: CONFIG.ACTIVE_VIDEO_TIMEOUT }).catch(() => {});
+        await page.waitForSelector(SELECTORS.activeVideo, { timeout: 5000 }).catch(() => {});
 
         // Additional random pause to simulate user looking at new video
         await simulateReading(800, 1800);
