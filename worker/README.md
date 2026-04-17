@@ -44,8 +44,8 @@ uv run python cli.py reset
 # Edit crontab
 crontab -e
 
-# Add daily job at 8am
-0 8 * * * cd /path/to/worker && uv run python cli.py trigger 20 >> /var/log/douyin.log 2>&1
+# Add daily job at 4am
+0 4 * * * cd /path/to/worker && uv run python cli.py trigger 20 >> /var/log/douyin.log 2>&1
 ```
 
 ## Configuration
@@ -60,9 +60,14 @@ Environment variables (`.env`):
 | `PGDATABASE` | `douyin` | Database name |
 | `PGUSER` | `postgres` | Database user |
 | `PGPASSWORD` | `postgres` | Database password |
-| `SCHEDULE_HOUR` | `8` | Hour for scheduled job (0-23) |
+| `SCHEDULE_HOUR` | `4` | Hour for scheduled job (0-23) |
 | `SCHEDULE_MINUTE` | `0` | Minute for scheduled job (0-59) |
 | `BATCH_SIZE` | `20` | Videos per batch |
+| `WEBGEMINI_POLL_INTERVAL` | `5` | Poll interval in seconds for WebGemini jobs |
+| `WEBGEMINI_POLL_MAX_WAIT` | `1800` | Max wait in seconds before upload polling times out |
+| `ENABLE_VIDEO_COMPRESSION` | `true` | Compress videos with `ffmpeg` before upload |
+| `VIDEO_COMPRESSION_CRF` | `32` | `ffmpeg` CRF value; higher means smaller files |
+| `VIDEO_COMPRESSION_PRESET` | `veryfast` | `ffmpeg` x264 preset for compression speed vs size |
 
 ## Pipeline Steps
 

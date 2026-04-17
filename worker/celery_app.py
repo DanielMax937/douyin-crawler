@@ -13,7 +13,7 @@ app.conf.update(
     timezone='Asia/Shanghai',
     enable_utc=True,
     task_track_started=True,
-    task_time_limit=3600,  # 1 hour max per task
+    task_time_limit=28800,  # 8 hours max per task
     worker_prefetch_multiplier=1,  # Process one task at a time
 )
 
@@ -23,10 +23,6 @@ app.conf.beat_schedule = {
         'task': 'tasks.process_pending_videos',
         'schedule': crontab(hour=SCHEDULE_HOUR, minute=SCHEDULE_MINUTE),
         'args': (BATCH_SIZE,),
-    },
-    'download-yesterday-videos-daily': {
-        'task': 'tasks.download_yesterday_videos',
-        'schedule': crontab(hour=5, minute=0),  # 每天凌晨 5 点
     },
     'reset-stale-tasks': {
         'task': 'tasks.reset_stale_tasks',

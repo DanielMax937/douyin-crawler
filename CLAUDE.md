@@ -22,9 +22,8 @@ PostgreSQL (douyin database)
     │  - video_task_steps: Step history with JSON results
     ▼
 Python Celery Worker (worker/)
-    - Pipeline: download → submit → get_summary
-    - Skips completed steps on retry
-    - CLI for manual triggering and status checks
+    - Per video (single Celery task): download → WebGemini summary → delete local mp4
+    - CLI: trigger batch (process_pending_videos) or process one video
 ```
 
 ## Common Commands

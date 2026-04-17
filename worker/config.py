@@ -16,7 +16,7 @@ POSTGRES_CONFIG = {
 }
 
 # Schedule configuration
-SCHEDULE_HOUR = int(os.getenv('SCHEDULE_HOUR', '8'))  # 8am by default
+SCHEDULE_HOUR = int(os.getenv('SCHEDULE_HOUR', '4'))  # 4am by default
 SCHEDULE_MINUTE = int(os.getenv('SCHEDULE_MINUTE', '0'))
 
 # Batch size for processing
@@ -28,4 +28,16 @@ DOWNLOAD_SAVE_DIR = os.getenv('DOWNLOAD_SAVE_DIR', './downloads')
 
 # WebGemini API (video analysis via chat with attachment)
 WEBGEMINI_API_URL = os.getenv('WEBGEMINI_API_URL', 'http://127.0.0.1:8200')
+WEBGEMINI_POLL_INTERVAL = int(os.getenv('WEBGEMINI_POLL_INTERVAL', '5'))
+WEBGEMINI_POLL_MAX_WAIT = int(os.getenv('WEBGEMINI_POLL_MAX_WAIT', '1800'))
 
+# Optional ffmpeg compression before upload
+ENABLE_VIDEO_COMPRESSION = os.getenv('ENABLE_VIDEO_COMPRESSION', 'true').lower() in ('1', 'true', 'yes', 'on')
+VIDEO_COMPRESSION_CRF = int(os.getenv('VIDEO_COMPRESSION_CRF', '32'))
+VIDEO_COMPRESSION_PRESET = os.getenv('VIDEO_COMPRESSION_PRESET', 'veryfast')
+
+# Telegram: set in this repo's .env (same variable names as blog2media)
+TELEGRAM_BOT_TOKEN = (os.getenv('TELEGRAM_BOT_TOKEN') or os.getenv('CTI_TG_BOT_TOKEN') or '').strip()
+TELEGRAM_ALLOWED_CHAT_ID = (
+    os.getenv('TELEGRAM_ALLOWED_CHAT_ID') or os.getenv('CTI_TG_CHAT_ID') or ''
+).strip()

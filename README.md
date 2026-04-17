@@ -24,9 +24,8 @@ A complete system for scraping Douyin (Chinese TikTok) videos and processing the
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
 │           Python CLI + Celery Worker (worker/)              │
-│  - Async pipeline: download → submit → get_summary          │
-│  - Triggered via CLI (manual or crontab)                    │
-│  - Skips completed steps on retry                           │
+│  - Per video: download → WebGemini 概括 → 删除本地 mp4     │
+│  - Triggered via CLI or Beat (process_pending_videos)       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -134,9 +133,9 @@ Expected output:
 ```
 [tasks]
   . tasks.process_pending_videos
-  . tasks.process_video_pipeline
+  . tasks.process_one_video_summary
   . tasks.reset_stale_tasks
-  . tasks.trigger_batch_now
+  . tasks.scrape_douyin_daily
 
 celery@hostname ready.
 ```
@@ -186,8 +185,8 @@ DOUYIN VIDEO TASK STATUS
 # Edit crontab
 crontab -e
 
-# Add daily job at 8am
-0 8 * * * cd /path/to/tiktok-scanner/worker && uv run python cli.py trigger 20 >> /var/log/douyin-worker.log 2>&1
+# Add daily job at 4am
+0 4 * * * cd /path/to/tiktok-scanner/worker && uv run python cli.py trigger 20 >> /var/log/douyin-worker.log 2>&1
 ```
 
 ## Project Structure

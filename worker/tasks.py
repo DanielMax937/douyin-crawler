@@ -1,34 +1,49 @@
 from celery_app import app
 from db import (
-    get_videos_with_local_file_without_summary,
-    get_video_by_id_with_local_path,
-    get_videos_without_local_file,
-    get_task_status,
-    create_or_get_task,
-    start_step,
-    complete_step,
+    get_videos_pending_summary,
+    get_video_by_id_for_processing,
+    get_comments_for_video,
     reset_stale_tasks as db_reset_stale_tasks,
-    get_videos_created_yesterday_without_local_file,
     update_video_local_path,
     create_or_update_video_summary,
     update_video_summary_result,
+    clear_video_local_path,
 )
 from datetime import datetime
 import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import time
 import urllib.parse
 import urllib.request
 
 try:
-    from config import DOWNLOAD_API_BASE_URL, DOWNLOAD_SAVE_DIR, WEBGEMINI_API_URL
+    from config import (
+        DOWNLOAD_API_BASE_URL,
+        DOWNLOAD_SAVE_DIR,
+        ENABLE_VIDEO_COMPRESSION,
+        VIDEO_COMPRESSION_CRF,
+        VIDEO_COMPRESSION_PRESET,
+        WEBGEMINI_API_URL,
+        WEBGEMINI_POLL_INTERVAL,
+        WEBGEMINI_POLL_MAX_WAIT,
+        TELEGRAM_BOT_TOKEN,
+        TELEGRAM_ALLOWED_CHAT_ID,
+    )
 except ImportError:
     DOWNLOAD_API_BASE_URL = 'http://127.0.0.1:8000'
     DOWNLOAD_SAVE_DIR = './downloads'
     WEBGEMINI_API_URL = 'http://127.0.0.1:8200'
+    WEBGEMINI_POLL_INTERVAL = 5
+    WEBGEMINI_POLL_MAX_WAIT = 1800
+    ENABLE_VIDEO_COMPRESSION = True
+    VIDEO_COMPRESSION_CRF = 32
+    VIDEO_COMPRESSION_PRESET = 'veryfast'
+    TELEGRAM_BOT_TOKEN = ''
+    TELEGRAM_ALLOWED_CHAT_ID = ''
 
 # Repo root (parent of worker/)
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -47,112 +62,79 @@ def parse_video_id_from_url(url):
     if not url or not url.strip():
         return None
     url = url.strip()
-    # Full URL: https://www.douyin.com/video/7611533789604433190
     m = re.search(r'douyin\.com/video/(\d+)', url)
     if m:
         return m.group(1)
-    # Short link /iesdouyin: video id in path
     m = re.search(r'/(\d{15,})/', url)
     if m:
         return m.group(1)
     return None
 
-STEPS = ['download', 'submit', 'get_summary']
 
-# 统一使用的 webgemini 视频概括 prompt
-WEBGEMINI_SUMMARY_PROMPT = "这段视频讲了什么？请简要概括。"
-
-
-def _run_webgemini_summary_for_video(video_id):
+def _build_webgemini_summary_prompt(video, comments):
     """
-    Inline: submit one video to webgemini, poll until done, store result.
-    Used by process_pending_videos for sequential processing (submit one, wait one, next).
+    Build prompt: video understanding + engagement stats + comments with per-comment likes,
+    and instructions for narrative + why video got likes + why top comments are liked.
+    video: dict from DB; comments: list of row dicts (username, content, time, location, likes).
     """
-    video = get_video_by_id_with_local_path(video_id)
-    if not video:
-        logger.error("Video %s not found or has no local_file_path", video_id)
-        return {'status': 'failed', 'error': 'No local file'}
+    def _s(val, default=''):
+        if val is None:
+            return default
+        t = str(val).strip()
+        return t if t else default
 
-    local_path = _resolve_video_path(video['local_file_path'])
-    if not local_path or not os.path.isfile(local_path):
-        logger.error("Video file not found: %s", local_path)
-        create_or_update_video_summary(
-            video_id, _get_douyin_url(video), status='failed',
-        )
-        return {'status': 'failed', 'error': f'File not found: {local_path}'}
+    vid = _s(video.get('video_id'), '—')
+    title = _s(video.get('title'), '（无标题）')
+    author = _s(video.get('author'), '（未知作者）')
+    likes = video.get('likes')
+    likes_disp = _s(video.get('likes_display'), str(likes) if likes is not None else '—')
+    cc = video.get('comments_count')
+    cc_disp = _s(video.get('comments_display'), str(cc) if cc is not None else '—')
+    shares = video.get('shares')
+    shares_disp = _s(video.get('shares_display'), str(shares) if shares is not None else '—')
 
-    douyin_url = _get_douyin_url(video)
+    lines = [
+        '【抖音视频互动数据（来自页面抓取，请结合视频画面一起分析）】',
+        f'- 视频ID：{vid}',
+        f'- 标题：{title}',
+        f'- 作者：{author}',
+        f'- 点赞数：{likes_disp}（数值：{likes if likes is not None else "—"}）',
+        f'- 评论数：{cc_disp}（数值：{cc if cc is not None else "—"}）',
+        f'- 转发/分享数：{shares_disp}（数值：{shares if shares is not None else "—"}）',
+        '',
+        '【评论列表】每条含：用户名、正文、时间、地点、该条评论获得的点赞数。',
+    ]
+    if not comments:
+        lines.append('（当前没有可用的评论文本记录；请主要依据视频内容分析，并说明评论数据缺失。）')
+    else:
+        for i, c in enumerate(comments, 1):
+            uname = _s(c.get('username'), '—')
+            content = _s(c.get('content'), '—')
+            ctime = _s(c.get('time'), '—')
+            loc = _s(c.get('location'), '—')
+            clikes = c.get('likes')
+            cl = clikes if clikes is not None else 0
+            lines.append(f'{i}. @{uname} | 该评论点赞数：{cl}')
+            lines.append(f'   正文：{content}')
+            lines.append(f'   时间：{ctime} | 地点：{loc}')
+            lines.append('')
 
-    try:
-        job_id = _submit_webgemini_chat(WEBGEMINI_SUMMARY_PROMPT, [local_path])
-        create_or_update_video_summary(
-            video_id, douyin_url, webgemini_job_id=job_id, status='processing',
-        )
-        logger.info("Submitted to webgemini, job_id=%s", job_id)
-
-        status, text, error = _poll_webgemini_chat(job_id)
-        if status == 'completed':
-            update_video_summary_result(video_id, text, status='completed')
-            logger.info("Webgemini summary completed for %s", video_id)
-            return {'status': 'completed', 'video_id': video_id, 'summary': text[:200]}
-        else:
-            update_video_summary_result(video_id, error or 'Unknown', status='failed')
-            logger.error("Webgemini failed for %s: %s", video_id, error)
-            return {'status': 'failed', 'video_id': video_id, 'error': error}
-    except Exception as e:
-        logger.exception("Webgemini summary failed for %s", video_id)
-        create_or_update_video_summary(video_id, douyin_url, status='failed')
-        return {'status': 'failed', 'video_id': video_id, 'error': str(e)}
+    lines.extend([
+        '---',
+        '请观看附件视频，用中文有条理地回答：',
+        '1）视频内容：画面里发生了什么、主题是什么。',
+        '2）结合评论（若有）：评论者在讨论什么，与画面如何呼应；这条视频整体「记录了什么事情」。',
+        '3）为什么可能有这么高点赞：结合画面情绪、话题点与上方互动数据，分析视频为何容易引发点赞（说明你的推理依据）。',
+        '4）高赞评论：指出点赞数突出的一条或几条，概括其内容，并分析观众为什么特别「喜欢」这条评论（笑点、梗、共鸣、争议等）。若无评论文本，说明无法逐条分析，仅可结合视频推测可能的讨论方向。',
+    ])
+    return '\n'.join(lines)
 
 
-@app.task(bind=True, name='tasks.process_pending_videos')
-def process_pending_videos(self, batch_size=20):
-    """
-    Scheduled task: Fetch downloaded videos without webgemini summary, upload to webgemini
-    for "这段视频讲了什么" analysis, poll job_id, store result in douyin_video_summaries.
-    严格串行：提交一个 -> 等待完成 -> 再处理下一个（不一次性全部提交）。
-    """
-    logger.info("Starting scheduled job: processing up to %s videos with webgemini (sequential)", batch_size)
-
-    videos = get_videos_with_local_file_without_summary(limit=batch_size)
-    # Filter to only videos with valid local files
-    valid_videos = []
-    for v in videos:
-        path = _resolve_video_path(v.get("local_file_path") or "")
-        if path and os.path.isfile(path):
-            valid_videos.append(v)
-        else:
-            logger.info("Skipping %s: file not found at %s", v["video_id"], path or v.get("local_file_path"))
-    videos = valid_videos
-    logger.info("Found %s videos to process (have valid local file, no summary)", len(videos))
-
-    completed = 0
-    failed = 0
-    results = []
-
-    for video in videos:
-        video_id = video['video_id']
-        logger.info("Processing video %s for webgemini summary (submit -> wait -> next)", video_id)
-        try:
-            outcome = _run_webgemini_summary_for_video(video_id)
-            if outcome.get('status') == 'completed':
-                completed += 1
-                results.append({'video_id': video_id, 'status': 'completed'})
-            else:
-                failed += 1
-                results.append({'video_id': video_id, 'status': 'failed', 'error': outcome.get('error', '')})
-        except Exception as e:
-            failed += 1
-            logger.error("Webgemini summary failed for %s: %s", video_id, e)
-            results.append({'video_id': video_id, 'status': 'failed', 'error': str(e)})
-
-    return {
-        'completed': completed,
-        'failed': failed,
-        'total': len(videos),
-        'results': results,
-        'timestamp': datetime.now().isoformat(),
-    }
+def _get_download_dir():
+    """Resolve download dir to an absolute path under repo root when configured relatively."""
+    if os.path.isabs(DOWNLOAD_SAVE_DIR):
+        return DOWNLOAD_SAVE_DIR
+    return os.path.normpath(os.path.join(REPO_DIR, DOWNLOAD_SAVE_DIR))
 
 
 def _resolve_video_path(local_path):
@@ -162,15 +144,13 @@ def _resolve_video_path(local_path):
     path = local_path.strip()
     if os.path.isabs(path):
         return path
-    # Try REPO_DIR first (e.g. DOWNLOAD_SAVE_DIR=./downloads when run from repo root)
     p1 = os.path.normpath(os.path.join(REPO_DIR, path))
     if os.path.isfile(p1):
         return p1
-    # Try REPO_DIR/worker (celery worker cwd is worker/)
     p2 = os.path.normpath(os.path.join(REPO_DIR, 'worker', path))
     if os.path.isfile(p2):
         return p2
-    return p1  # Return first guess for error message if not found
+    return p1
 
 
 def _get_douyin_url(video):
@@ -183,6 +163,99 @@ def _get_douyin_url(video):
     if short_link:
         return short_link
     return f"https://www.douyin.com/video/{video_id}"
+
+
+def _build_download_url(video):
+    """Resolve share/short link for Douyin download API."""
+    share_link = (video.get('share_link') or '').strip()
+    short_link = (video.get('short_link') or '').strip()
+    video_id = video['video_id']
+    if share_link and ('douyin.com' in share_link or 'iesdouyin.com' in share_link):
+        return share_link
+    if short_link:
+        return short_link
+    return f"https://www.douyin.com/video/{video_id}"
+
+
+def _download_one_video(video):
+    """
+    Download one video via Douyin API; write file and set local_file_path.
+    Returns (ok, absolute_path_or_none, error_message_or_none).
+    """
+    video_id = video['video_id']
+    url = _build_download_url(video)
+    download_dir = _get_download_dir()
+    os.makedirs(download_dir, exist_ok=True)
+    file_path = os.path.normpath(os.path.join(download_dir, f"douyin_{video_id}.mp4"))
+    download_url = f"{DOWNLOAD_API_BASE_URL.rstrip('/')}/api/download"
+    params = f"url={urllib.parse.quote(url)}"
+    try:
+        with urllib.request.urlopen(f"{download_url}?{params}", timeout=300) as resp:
+            if resp.status != 200:
+                return False, None, f"HTTP {resp.status}"
+            with open(file_path, 'wb') as f:
+                f.write(resp.read())
+        update_video_local_path(video_id, file_path)
+        return True, file_path, None
+    except Exception as e:
+        if os.path.isfile(file_path):
+            try:
+                os.remove(file_path)
+            except OSError:
+                pass
+        logger.error("Download failed for %s: %s", video_id, e)
+        return False, None, str(e)
+
+
+def _remove_local_file_and_clear_db(video_id, local_path):
+    """Delete file if present; always clear local_file_path in DB."""
+    if local_path and os.path.isfile(local_path):
+        try:
+            os.remove(local_path)
+            logger.info("Removed local video file after processing: %s", local_path)
+        except OSError as e:
+            logger.warning("Could not remove %s: %s", local_path, e)
+    clear_video_local_path(video_id)
+
+
+def _compress_video_for_upload(local_path):
+    """
+    Compress video with ffmpeg before upload.
+    Returns the path to upload, which may be the original file if compression is disabled.
+    """
+    if not ENABLE_VIDEO_COMPRESSION:
+        return local_path
+
+    ffmpeg_bin = shutil.which('ffmpeg')
+    if not ffmpeg_bin:
+        raise RuntimeError("ffmpeg not found in PATH")
+
+    base, ext = os.path.splitext(local_path)
+    compressed_path = f"{base}_compressed{ext or '.mp4'}"
+    cmd = [
+        ffmpeg_bin,
+        '-y',
+        '-i', local_path,
+        '-c:v', 'libx264',
+        '-preset', VIDEO_COMPRESSION_PRESET,
+        '-crf', str(VIDEO_COMPRESSION_CRF),
+        '-c:a', 'aac',
+        '-b:a', '128k',
+        '-movflags', '+faststart',
+        compressed_path,
+    ]
+
+    logger.info(
+        "Compressing video before webgemini upload: src=%s dest=%s crf=%s preset=%s",
+        local_path, compressed_path, VIDEO_COMPRESSION_CRF, VIDEO_COMPRESSION_PRESET,
+    )
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+    if result.returncode != 0:
+        err = (result.stderr or result.stdout or '').strip()
+        raise RuntimeError(f"ffmpeg compression failed: {err}")
+    if not os.path.isfile(compressed_path):
+        raise RuntimeError(f"Compressed file not found: {compressed_path}")
+    return compressed_path
 
 
 def _submit_webgemini_chat(prompt, attachments):
@@ -205,7 +278,7 @@ def _submit_webgemini_chat(prompt, attachments):
         return job_id
 
 
-def _poll_webgemini_chat(job_id, poll_interval=5, max_wait=600):
+def _poll_webgemini_chat(job_id, poll_interval=WEBGEMINI_POLL_INTERVAL, max_wait=WEBGEMINI_POLL_MAX_WAIT):
     """Poll GET /chat/{job_id} until completed or failed. Return (status, text, error)."""
     url = f"{WEBGEMINI_API_URL.rstrip('/')}/chat/{job_id}"
     logger.info("[webgemini] GET /chat/{job_id} before: job_id=%s url=%s", job_id, url)
@@ -238,173 +311,204 @@ def _poll_webgemini_chat(job_id, poll_interval=5, max_wait=600):
     return ('failed', None, 'Poll timeout')
 
 
-@app.task(bind=True, name='tasks.process_webgemini_summary')
-def process_webgemini_summary(self, video_id):
+TELEGRAM_MAX_MESSAGE_LEN = 4096
+
+
+def _split_telegram_text(text):
+    if not text:
+        return ['']
+    return [
+        text[i : i + TELEGRAM_MAX_MESSAGE_LEN]
+        for i in range(0, len(text), TELEGRAM_MAX_MESSAGE_LEN)
+    ]
+
+
+def _send_telegram_plain(text):
     """
-    Single-video task: upload to webgemini, poll job_id, store result.
-    For batch processing use process_pending_videos (sequential: submit one, wait one, next).
+    Send plain text via Telegram Bot API.
+    Uses TELEGRAM_BOT_TOKEN + TELEGRAM_ALLOWED_CHAT_ID, or CTI_TG_* (set in douyin-crawler .env).
     """
-    logger.info("Processing webgemini summary for video %s", video_id)
-    return _run_webgemini_summary_for_video(video_id)
+    token = (TELEGRAM_BOT_TOKEN or '').strip()
+    chat_id = (TELEGRAM_ALLOWED_CHAT_ID or '').strip()
+    if not token or not chat_id:
+        logger.warning(
+            "Telegram skipped: set TELEGRAM_BOT_TOKEN and TELEGRAM_ALLOWED_CHAT_ID "
+            "(or CTI_TG_BOT_TOKEN / CTI_TG_CHAT_ID) in douyin-crawler .env",
+        )
+        return False
+    api_url = f"https://api.telegram.org/bot{token}/sendMessage"
+    for chunk in _split_telegram_text(text):
+        payload = json.dumps({
+            'chat_id': chat_id,
+            'text': chunk,
+            'disable_web_page_preview': False,
+        }).encode('utf-8')
+        req = urllib.request.Request(api_url, data=payload, method='POST')
+        req.add_header('Content-Type', 'application/json')
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                if resp.status != 200:
+                    logger.error("Telegram sendMessage HTTP %s", resp.status)
+                    return False
+        except Exception as e:
+            logger.exception("Telegram sendMessage failed: %s", e)
+            return False
+    return True
 
 
-@app.task(bind=True, name='tasks.process_video_pipeline')
-def process_video_pipeline(self, video_id):
+def _notify_telegram_douyin_success_batch(items):
     """
-    Process a single video through the pipeline.
-    Skips already completed steps. Runs all steps in sequence.
+    After process_pending_videos, if at least one video succeeded, send each link + AI reply.
+    items: list of dicts with keys video_id, douyin_url, ai_reply.
     """
-    logger.info(f"Processing video {video_id}")
+    if not items:
+        return False
+    n = len(items)
+    lines = [
+        f'douyin-crawler 视频解析完成（本批成功 {n} 条）',
+        '',
+    ]
+    for it in items:
+        lines.append(f"video_id: {it.get('video_id', '—')}")
+        lines.append(f"链接: {it.get('douyin_url', '—')}")
+        lines.append('')
+        lines.append('AI 回复:')
+        lines.append(it.get('ai_reply') or '（空）')
+        lines.append('')
+    body = '\n'.join(lines).rstrip()
+    ok = _send_telegram_plain(body)
+    if ok:
+        logger.info("Telegram notification sent for douyin summary batch (%s success)", n)
+    return ok
 
-    # Get or create task
-    create_or_get_task(video_id)
 
-    # Get current status
-    status = get_task_status(video_id)
-    completed_steps = status['completed_steps']
-    step_results = status['step_results']
+def _process_one_video_download_summary_delete(video):
+    """
+    Download if needed → WebGemini submit + poll → delete file + clear DB path.
+    """
+    video_id = video['video_id']
+    douyin_url = _get_douyin_url(video)
+    local_path = None
+    upload_path = None
 
-    logger.info(f"Video {video_id} - completed steps: {completed_steps}")
+    try:
+        local_path = _resolve_video_path(video.get('local_file_path') or '')
+        if not local_path or not os.path.isfile(local_path):
+            ok, path, err = _download_one_video(video)
+            if not ok:
+                create_or_update_video_summary(
+                    video_id, douyin_url, status='failed',
+                )
+                return {'status': 'failed', 'video_id': video_id, 'error': err or 'download failed'}
 
-    # Process each step in order, skipping completed ones
-    for step in STEPS:
-        if step in completed_steps:
-            logger.info(f"Skipping {step} - already completed")
-            continue
-
-        logger.info(f"Executing step: {step}")
+            local_path = path
 
         try:
-            if step == 'download':
-                result = _execute_download(video_id)
-            elif step == 'submit':
-                download_result = step_results.get('download', {})
-                result = _execute_submit(video_id, download_result)
-            elif step == 'get_summary':
-                submit_result = step_results.get('submit', {})
-                result = _execute_get_summary(video_id, submit_result)
+            local_path = os.path.abspath(local_path)
+            upload_path = _compress_video_for_upload(local_path)
+            upload_path = os.path.abspath(upload_path)
+            comments = get_comments_for_video(video_id)
+            summary_prompt = _build_webgemini_summary_prompt(video, comments)
+            job_id = _submit_webgemini_chat(summary_prompt, [upload_path])
+            create_or_update_video_summary(
+                video_id, douyin_url, webgemini_job_id=job_id, status='processing',
+            )
+            logger.info("Submitted to webgemini, job_id=%s", job_id)
 
-            # Update step_results for next iteration
-            step_results[step] = result
-
-        except Exception as e:
-            logger.error(f"Step {step} failed for video {video_id}: {e}")
-            return {'status': 'failed', 'step': step, 'error': str(e)}
-
-    logger.info(f"Video {video_id} pipeline completed")
-    return {'status': 'completed', 'video_id': video_id}
-
-
-def _execute_download(video_id):
-    """
-    Step 1: Download video.
-    TODO: Implement actual download logic.
-    """
-    logger.info(f"Downloading video {video_id}")
-    start_step(video_id, 'download')
-
-    try:
-        # TODO: Implement actual video download logic
-        # Example:
-        # - Fetch video URL from douyin_videos table
-        # - Download video file
-        # - Store locally or upload to cloud storage
-
-        result = {
-            'video_id': video_id,
-            'downloaded_at': datetime.now().isoformat(),
-            'file_path': f'/tmp/videos/{video_id}.mp4',  # Placeholder
-            'status': 'success'
-        }
-
-        complete_step(video_id, 'download', result)
-        return result
-
-    except Exception as e:
-        logger.error(f"Download failed for {video_id}: {e}")
-        complete_step(video_id, 'download', None, str(e))
-        raise
-
-
-def _execute_submit(video_id, download_result):
-    """
-    Step 2: Submit video to webgemini for summary.
-    Uses same logic as _run_webgemini_summary_for_video (submit only).
-    """
-    logger.info(f"Submitting video {video_id} to webgemini")
-    start_step(video_id, 'submit')
-
-    try:
-        video = get_video_by_id_with_local_path(video_id)
-        if not video:
-            raise ValueError(f"Video {video_id} not found or has no local_file_path")
-
-        local_path = _resolve_video_path(video['local_file_path'])
-        if not local_path or not os.path.isfile(local_path):
-            raise FileNotFoundError(f"Video file not found: {local_path}")
-
-        douyin_url = _get_douyin_url(video)
-        job_id = _submit_webgemini_chat(WEBGEMINI_SUMMARY_PROMPT, [local_path])
-        create_or_update_video_summary(
-            video_id, douyin_url, webgemini_job_id=job_id, status='processing',
-        )
-        logger.info("Submitted to webgemini, job_id=%s", job_id)
-
-        result = {
-            'video_id': video_id,
-            'webgemini_job_id': job_id,
-            'submitted_at': datetime.now().isoformat(),
-            'status': 'success',
-        }
-        complete_step(video_id, 'submit', result)
-        return result
-
-    except Exception as e:
-        logger.error(f"Submit failed for {video_id}: {e}")
-        complete_step(video_id, 'submit', None, str(e))
-        raise
-
-
-def _execute_get_summary(video_id, submit_result):
-    """
-    Step 3: Poll webgemini for summary result.
-    Uses same logic as _run_webgemini_summary_for_video (poll only).
-    """
-    logger.info(f"Getting summary for video {video_id} from webgemini")
-    start_step(video_id, 'get_summary')
-
-    try:
-        job_id = submit_result.get('webgemini_job_id') or submit_result.get('submission_id')
-        if not job_id:
-            raise ValueError("No webgemini_job_id in submit_result")
-
-        status, text, error = _poll_webgemini_chat(job_id)
-        if status == 'completed':
-            update_video_summary_result(video_id, text, status='completed')
-            logger.info("Webgemini summary completed for %s", video_id)
-            result = {
-                'video_id': video_id,
-                'retrieved_at': datetime.now().isoformat(),
-                'summary': text[:500] if text else '',
-                'status': 'success',
-            }
-        else:
+            status, text, error = _poll_webgemini_chat(job_id)
+            if status == 'completed':
+                update_video_summary_result(video_id, text, status='completed')
+                logger.info("Webgemini summary completed for %s", video_id)
+                return {
+                    'status': 'completed',
+                    'video_id': video_id,
+                    'douyin_url': douyin_url,
+                    'ai_reply': text or '',
+                }
             update_video_summary_result(video_id, error or 'Unknown', status='failed')
             logger.error("Webgemini failed for %s: %s", video_id, error)
-            result = {
-                'video_id': video_id,
-                'retrieved_at': datetime.now().isoformat(),
-                'error': error,
-                'status': 'failed',
-            }
+            return {'status': 'failed', 'video_id': video_id, 'error': error}
+        except Exception as e:
+            logger.exception("Webgemini summary failed for %s", video_id)
+            create_or_update_video_summary(video_id, douyin_url, status='failed')
+            return {'status': 'failed', 'video_id': video_id, 'error': str(e)}
+    finally:
+        if upload_path and upload_path != local_path and os.path.isfile(upload_path):
+            try:
+                os.remove(upload_path)
+                logger.info("Removed compressed upload file after processing: %s", upload_path)
+            except OSError as e:
+                logger.warning("Could not remove compressed file %s: %s", upload_path, e)
+        _remove_local_file_and_clear_db(video_id, local_path)
 
-        complete_step(video_id, 'get_summary', result)
-        return result
 
-    except Exception as e:
-        logger.error(f"Get summary failed for {video_id}: {e}")
-        complete_step(video_id, 'get_summary', None, str(e))
-        raise
+@app.task(bind=True, name='tasks.process_pending_videos')
+def process_pending_videos(self, batch_size=20):
+    """
+    Scheduled / batch: for each pending video — download (if needed) → WebGemini → delete file.
+    Sequential: one video at a time.
+    """
+    logger.info(
+        "Starting process_pending_videos: up to %s videos (download → webgemini → delete)",
+        batch_size,
+    )
+
+    videos = get_videos_pending_summary(limit=batch_size)
+    logger.info("Found %s videos pending summary", len(videos))
+
+    completed = 0
+    failed = 0
+    results = []
+    success_rows = []
+
+    for video in videos:
+        video_id = video['video_id']
+        logger.info("Processing video %s", video_id)
+        try:
+            outcome = _process_one_video_download_summary_delete(video)
+            if outcome.get('status') == 'completed':
+                completed += 1
+                results.append({'video_id': video_id, 'status': 'completed'})
+                success_rows.append({
+                    'video_id': video_id,
+                    'douyin_url': outcome.get('douyin_url') or '',
+                    'ai_reply': outcome.get('ai_reply') or '',
+                })
+            else:
+                failed += 1
+                results.append({
+                    'video_id': video_id,
+                    'status': 'failed',
+                    'error': outcome.get('error', ''),
+                })
+        except Exception as e:
+            failed += 1
+            logger.error("Pipeline failed for %s: %s", video_id, e)
+            results.append({'video_id': video_id, 'status': 'failed', 'error': str(e)})
+
+    telegram_sent = None
+    if success_rows:
+        telegram_sent = _notify_telegram_douyin_success_batch(success_rows)
+
+    out = {
+        'completed': completed,
+        'failed': failed,
+        'total': len(videos),
+        'results': results,
+        'timestamp': datetime.now().isoformat(),
+    }
+    if telegram_sent is not None:
+        out['telegram_sent'] = telegram_sent
+    return out
+
+
+@app.task(bind=True, name='tasks.process_one_video_summary')
+def process_one_video_summary(self, video_id):
+    """Process a single video: download → WebGemini → delete file."""
+    video = get_video_by_id_for_processing(video_id)
+    if not video:
+        return {'status': 'failed', 'error': 'video not found', 'video_id': video_id}
+    return _process_one_video_download_summary_delete(video)
 
 
 @app.task(name='tasks.reset_stale_tasks')
@@ -413,74 +517,6 @@ def reset_stale_tasks():
     logger.info("Resetting stale tasks")
     db_reset_stale_tasks(hours=24)
     return {'status': 'completed', 'timestamp': datetime.now().isoformat()}
-
-
-def _download_videos(videos):
-    """Shared logic: download videos via API and update local_file_path."""
-    os.makedirs(DOWNLOAD_SAVE_DIR, exist_ok=True)
-    success_count = 0
-    fail_count = 0
-    for v in videos:
-        video_id = v['video_id']
-        share_link = (v.get('share_link') or '').strip()
-        short_link = (v.get('short_link') or '').strip()
-        if share_link and ('douyin.com' in share_link or 'iesdouyin.com' in share_link):
-            url = share_link
-        elif short_link:
-            url = short_link
-        else:
-            url = f"https://www.douyin.com/video/{video_id}"
-        download_url = f"{DOWNLOAD_API_BASE_URL.rstrip('/')}/api/download"
-        params = f"url={urllib.parse.quote(url)}"
-        file_path = os.path.join(DOWNLOAD_SAVE_DIR, f"douyin_{video_id}.mp4")
-        try:
-            with urllib.request.urlopen(f"{download_url}?{params}", timeout=300) as resp:
-                if resp.status != 200:
-                    raise Exception(f"HTTP {resp.status}")
-                with open(file_path, 'wb') as f:
-                    f.write(resp.read())
-            update_video_local_path(video_id, file_path)
-            success_count += 1
-            logger.info(f"Downloaded video {video_id} -> {file_path}")
-        except Exception as e:
-            fail_count += 1
-            logger.error(f"Download failed for {video_id}: {e}")
-    return success_count, fail_count
-
-
-@app.task(name='tasks.download_pending_videos')
-def download_pending_videos(limit=20):
-    """
-    手动触发：下载未下载的视频（含今天创建的）。
-    用于刚爬取完立即下载。
-    """
-    logger.info("Starting download_pending_videos: fetching videos without local file (include today)")
-    videos = get_videos_without_local_file(limit=limit, include_today=True)
-    logger.info("Found %s videos to download", len(videos))
-    success_count, fail_count = _download_videos(videos)
-    return {
-        'success': success_count,
-        'failed': fail_count,
-        'total': len(videos),
-        'timestamp': datetime.now().isoformat(),
-    }
-
-
-@app.task(name='tasks.download_yesterday_videos')
-def download_yesterday_videos(limit=500):
-    """
-    每天凌晨5点执行：找出昨天创建且未下载的视频，调用下载服务，将本地路径写入 local_file_path。
-    """
-    logger.info("Starting download_yesterday_videos: fetching yesterday's videos without local file")
-    videos = get_videos_created_yesterday_without_local_file(limit=limit)
-    logger.info("Found %s videos to download", len(videos))
-    success_count, fail_count = _download_videos(videos)
-    return {
-        'success': success_count,
-        'failed': fail_count,
-        'total': len(videos),
-        'timestamp': datetime.now().isoformat(),
-    }
 
 
 @app.task(name='tasks.scrape_douyin_daily')
@@ -502,7 +538,7 @@ def scrape_douyin_daily(count=100):
             env=env,
             capture_output=True,
             text=True,
-            timeout=None,  # 无超时，直到收集满 count 个视频
+            timeout=None,
         )
         if result.returncode != 0:
             logger.error("Scraper failed: %s", result.stderr or result.stdout)
@@ -522,10 +558,3 @@ def scrape_douyin_daily(count=100):
     except subprocess.TimeoutExpired:
         logger.error("Scraper timed out (should not happen with timeout=None)")
         raise
-
-
-# Manual trigger task (for testing)
-@app.task(bind=True, name='tasks.trigger_batch_now')
-def trigger_batch_now(self, batch_size=20):
-    """Manually trigger batch processing (for testing)."""
-    return process_pending_videos(batch_size)

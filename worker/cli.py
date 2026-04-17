@@ -22,7 +22,7 @@ from db import (
     create_or_get_task,
     get_connection,
 )
-from tasks import process_video_pipeline, trigger_batch_now
+from tasks import process_pending_videos, process_one_video_summary
 
 
 def show_status():
@@ -99,10 +99,9 @@ def trigger_batch(count=20):
             created += 1
             print(f"   📋 Created/updated task for {video_id}")
 
-    print(f"\n📤 Queuing {created} videos for Celery processing...")
+    print(f"\n📤 Queuing batch Celery task (download → WebGemini → delete)...")
 
-    # Trigger Celery to process
-    result = trigger_batch_now.delay(count)
+    result = process_pending_videos.delay(count)
     print(f"   Task ID: {result.id}")
     print("   Processing started in background")
     print("\n   Use 'python cli.py status' to check progress")
@@ -125,7 +124,7 @@ def process_single(video_id):
         print(f"   Current step: {status['task']['current_step']}")
         print(f"   Completed steps: {status['completed_steps']}")
 
-    result = process_video_pipeline.delay(video_id)
+    result = process_one_video_summary.delay(video_id)
     print(f"   Task ID: {result.id}")
     print("   Processing... (check worker logs for progress)")
 

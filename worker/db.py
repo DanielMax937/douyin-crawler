@@ -201,35 +201,87 @@ def update_video_local_path(video_id, local_path):
         conn.close()
 
 
-def get_video_by_id_with_local_path(video_id):
-    """Fetch a single video by id if it has local_file_path."""
+def get_video_by_id_for_processing(video_id):
+    """Fetch a single video row (for download + summary pipeline)."""
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
-                SELECT video_id, share_link, short_link, local_file_path
+                SELECT video_id, share_link, short_link, local_file_path,
+                       title, author,
+                       COALESCE(likes, 0) AS likes,
+                       likes_display,
+                       COALESCE(comments_count, 0) AS comments_count,
+                       comments_display,
+                       COALESCE(shares, 0) AS shares,
+                       shares_display
                 FROM douyin_videos
                 WHERE video_id = %s
-                  AND local_file_path IS NOT NULL AND local_file_path != ''
             """, (video_id,))
             return cur.fetchone()
     finally:
         conn.close()
 
 
-def get_videos_with_local_file_without_summary(limit=20):
+def get_comments_for_video(video_id):
     """
-    Fetch videos that have local_file_path and don't have a completed record in douyin_video_summaries.
+    Comments scraped for this video, ordered by comment likes (desc) then id.
+    Returns list of dicts: username, content, time, location, likes.
     """
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
-                SELECT v.video_id, v.share_link, v.short_link, v.local_file_path
+                SELECT username, content, time, location, COALESCE(likes, 0) AS likes
+                FROM douyin_comments
+                WHERE video_id = %s
+                ORDER BY likes DESC NULLS LAST, id ASC
+            """, (video_id,))
+            return cur.fetchall()
+    finally:
+        conn.close()
+
+
+def clear_video_local_path(video_id):
+    """Clear local_file_path after the file is deleted."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE douyin_videos
+                SET local_file_path = NULL, updated_at = CURRENT_TIMESTAMP
+                WHERE video_id = %s
+            """, (video_id,))
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def get_videos_pending_summary(limit=20):
+    """
+    Videos needing summary: no summary row or failed summary.
+    Must have share_link, short_link, and/or existing local_file_path (legacy).
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT v.video_id, v.share_link, v.short_link, v.local_file_path,
+                       v.title, v.author,
+                       COALESCE(v.likes, 0) AS likes,
+                       v.likes_display,
+                       COALESCE(v.comments_count, 0) AS comments_count,
+                       v.comments_display,
+                       COALESCE(v.shares, 0) AS shares,
+                       v.shares_display
                 FROM douyin_videos v
                 LEFT JOIN douyin_video_summaries s ON v.video_id = s.video_id
-                WHERE v.local_file_path IS NOT NULL AND v.local_file_path != ''
-                  AND (s.id IS NULL OR s.status = 'failed')
+                WHERE (s.id IS NULL OR s.status = 'failed')
+                  AND (
+                    (v.local_file_path IS NOT NULL AND v.local_file_path != '')
+                    OR (v.share_link IS NOT NULL AND v.share_link != '')
+                    OR (v.short_link IS NOT NULL AND v.short_link != '')
+                  )
                 ORDER BY v.created_at ASC
                 LIMIT %s
             """, (limit,))

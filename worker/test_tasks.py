@@ -6,252 +6,251 @@ Run with: uv run python -m pytest test_tasks.py -v
 """
 
 import pytest
-from unittest.mock import MagicMock, patch, call
-from datetime import datetime
-
-
-class TestProcessVideoPipeline:
-    """Test the video processing pipeline."""
-
-    @patch('tasks.update_video_summary_result')
-    @patch('tasks._poll_webgemini_chat')
-    @patch('tasks.create_or_update_video_summary')
-    @patch('tasks._submit_webgemini_chat')
-    @patch('tasks.get_video_by_id_with_local_path')
-    @patch('tasks.complete_step')
-    @patch('tasks.start_step')
-    @patch('tasks.get_task_status')
-    @patch('tasks.create_or_get_task')
-    def test_skips_completed_steps(
-        self, mock_create, mock_status, mock_start, mock_complete,
-        mock_get_video, mock_submit, mock_summary, mock_poll, mock_update
-    ):
-        """Pipeline should skip already completed steps."""
-        from tasks import process_video_pipeline
-
-        mock_create.return_value = {'video_id': 'vid1'}
-        mock_status.return_value = {
-            'completed_steps': ['download'],
-            'step_results': {'download': {'file_path': '/tmp/vid1.mp4'}}
-        }
-        mock_get_video.return_value = {
-            'video_id': 'vid1', 'local_file_path': '/tmp/vid1.mp4',
-            'share_link': 'https://www.douyin.com/video/vid1',
-        }
-        mock_submit.return_value = 'job_abc'
-        mock_poll.return_value = ('completed', 'Summary text', None)
-
-        with patch('os.path.isfile', return_value=True):
-            result = process_video_pipeline('vid1')
-
-        start_calls = [c[0][1] for c in mock_start.call_args_list]
-        assert 'download' not in start_calls
-        assert 'submit' in start_calls
-        assert 'get_summary' in start_calls
-        assert result['status'] == 'completed'
-
-    @patch('tasks.update_video_summary_result')
-    @patch('tasks._poll_webgemini_chat')
-    @patch('tasks.create_or_update_video_summary')
-    @patch('tasks._submit_webgemini_chat')
-    @patch('tasks.get_video_by_id_with_local_path')
-    @patch('tasks.complete_step')
-    @patch('tasks.start_step')
-    @patch('tasks.get_task_status')
-    @patch('tasks.create_or_get_task')
-    def test_runs_all_steps_for_new_video(
-        self, mock_create, mock_status, mock_start, mock_complete,
-        mock_get_video, mock_submit, mock_summary, mock_poll, mock_update
-    ):
-        """New video should run all 3 steps (download placeholder, submit+get_summary via webgemini)."""
-        from tasks import process_video_pipeline
-
-        mock_create.return_value = {'video_id': 'vid1'}
-        mock_status.return_value = {'completed_steps': [], 'step_results': {}}
-        mock_get_video.return_value = {
-            'video_id': 'vid1', 'local_file_path': '/tmp/vid1.mp4',
-            'share_link': 'https://www.douyin.com/video/vid1',
-        }
-        mock_submit.return_value = 'job_abc'
-        mock_poll.return_value = ('completed', 'Summary text', None)
-
-        with patch('os.path.isfile', return_value=True):
-            result = process_video_pipeline('vid1')
-
-        start_calls = [c[0][1] for c in mock_start.call_args_list]
-        assert start_calls == ['download', 'submit', 'get_summary']
-        assert result['status'] == 'completed'
-
-    @patch('tasks.complete_step')
-    @patch('tasks.start_step')
-    @patch('tasks.get_task_status')
-    @patch('tasks.create_or_get_task')
-    def test_stops_on_step_failure(self, mock_create, mock_status, mock_start, mock_complete):
-        """Pipeline should stop and return error on step failure."""
-        from tasks import process_video_pipeline
-
-        mock_create.return_value = {'video_id': 'vid1'}
-        mock_status.return_value = {
-            'completed_steps': [],
-            'step_results': {}
-        }
-
-        # Make start_step raise on 'submit'
-        def start_side_effect(video_id, step):
-            if step == 'submit':
-                raise Exception("Submit failed")
-
-        mock_start.side_effect = start_side_effect
-
-        result = process_video_pipeline('vid1')
-
-        assert result['status'] == 'failed'
-        assert result['step'] == 'submit'
-        assert 'Submit failed' in result['error']
+import os
+import shutil
+import tempfile
+from unittest.mock import patch
 
 
 class TestProcessPendingVideos:
-    """Test batch processing of pending videos (webgemini)."""
+    """Test batch processing (download → webgemini → delete)."""
 
-    @patch('tasks._run_webgemini_summary_for_video')
-    @patch('tasks.get_videos_with_local_file_without_summary')
-    def test_processes_all_found_videos(self, mock_get_videos, mock_run_summary):
-        """Should process all videos returned by get_videos_with_local_file_without_summary."""
+    @patch('tasks._notify_telegram_douyin_success_batch')
+    @patch('tasks._process_one_video_download_summary_delete')
+    @patch('tasks.get_videos_pending_summary')
+    def test_processes_all_found_videos(self, mock_get_videos, mock_one, mock_notify):
+        """Should process all videos returned by get_videos_pending_summary."""
         from tasks import process_pending_videos
 
+        mock_notify.return_value = True
         mock_get_videos.return_value = [
-            {'video_id': 'vid1'},
-            {'video_id': 'vid2'},
-            {'video_id': 'vid3'},
+            {'video_id': 'vid1', 'share_link': 'x', 'short_link': '', 'local_file_path': None},
+            {'video_id': 'vid2', 'share_link': 'x', 'short_link': '', 'local_file_path': None},
         ]
-        mock_run_summary.return_value = {'status': 'completed'}
+        mock_one.return_value = {
+            'status': 'completed',
+            'douyin_url': 'https://example.com/v',
+            'ai_reply': 'ok',
+        }
 
         result = process_pending_videos(batch_size=10)
 
-        assert result['total'] == 3
-        assert result['completed'] == 3
-        assert mock_run_summary.call_count == 3
+        assert result['total'] == 2
+        assert result['completed'] == 2
+        assert mock_one.call_count == 2
+        mock_notify.assert_called_once_with([
+            {'video_id': 'vid1', 'douyin_url': 'https://example.com/v', 'ai_reply': 'ok'},
+            {'video_id': 'vid2', 'douyin_url': 'https://example.com/v', 'ai_reply': 'ok'},
+        ])
 
-    @patch('tasks._run_webgemini_summary_for_video')
-    @patch('tasks.get_videos_with_local_file_without_summary')
-    def test_respects_batch_size(self, mock_get_videos, mock_run_summary):
-        """Should pass batch_size to get_videos_with_local_file_without_summary."""
+    @patch('tasks._process_one_video_download_summary_delete')
+    @patch('tasks.get_videos_pending_summary')
+    def test_respects_batch_size(self, mock_get_videos, mock_one):
+        """Should pass batch_size as limit to get_videos_pending_summary."""
         from tasks import process_pending_videos
 
         mock_get_videos.return_value = []
-        mock_run_summary.return_value = {'status': 'completed'}
+        mock_one.return_value = {'status': 'completed'}
 
         process_pending_videos(batch_size=5)
 
         mock_get_videos.assert_called_once_with(limit=5)
 
+    @patch('tasks._notify_telegram_douyin_success_batch')
+    @patch('tasks._process_one_video_download_summary_delete')
+    @patch('tasks.get_videos_pending_summary')
+    def test_telegram_when_exactly_one_success(self, mock_get, mock_one, mock_notify):
+        """When batch has one successful video, notify Telegram with link + AI reply."""
+        from tasks import process_pending_videos
 
-class TestExecuteDownload:
-    """Test the download step execution."""
-
-    @patch('tasks.complete_step')
-    @patch('tasks.start_step')
-    def test_returns_file_path(self, mock_start, mock_complete):
-        """Download should return file_path in result."""
-        from tasks import _execute_download
-
-        result = _execute_download('vid1')
-
-        assert 'file_path' in result
-        assert 'vid1' in result['file_path']
-        assert result['status'] == 'success'
-
-    @patch('tasks.complete_step')
-    @patch('tasks.start_step')
-    def test_calls_start_and_complete(self, mock_start, mock_complete):
-        """Should call start_step and complete_step."""
-        from tasks import _execute_download
-
-        _execute_download('vid1')
-
-        mock_start.assert_called_once_with('vid1', 'download')
-        mock_complete.assert_called_once()
-        # Verify complete was called with success (no error)
-        args = mock_complete.call_args[0]
-        assert args[0] == 'vid1'
-        assert args[1] == 'download'
-        assert args[2] is not None  # result
-        assert len(mock_complete.call_args[0]) == 3  # no error param
-
-
-class TestExecuteSubmit:
-    """Test the submit step execution (webgemini)."""
-
-    @patch('tasks.create_or_update_video_summary')
-    @patch('tasks._submit_webgemini_chat')
-    @patch('tasks.get_video_by_id_with_local_path')
-    @patch('tasks.complete_step')
-    @patch('tasks.start_step')
-    def test_submits_to_webgemini(self, mock_start, mock_complete, mock_get_video, mock_submit, mock_summary):
-        """Submit should call webgemini and return job_id."""
-        from tasks import _execute_submit
-
-        mock_get_video.return_value = {
-            'video_id': 'vid1',
-            'local_file_path': '/tmp/vid1.mp4',
-            'share_link': 'https://www.douyin.com/video/vid1',
+        mock_notify.return_value = True
+        mock_get.return_value = [
+            {'video_id': 'v1', 'share_link': 'x', 'short_link': '', 'local_file_path': None},
+        ]
+        mock_one.return_value = {
+            'status': 'completed',
+            'douyin_url': 'https://www.douyin.com/video/v1',
+            'ai_reply': 'analysis text',
         }
-        mock_submit.return_value = 'job_abc123'
+        result = process_pending_videos(batch_size=10)
 
+        assert result['completed'] == 1
+        mock_notify.assert_called_once_with([
+            {
+                'video_id': 'v1',
+                'douyin_url': 'https://www.douyin.com/video/v1',
+                'ai_reply': 'analysis text',
+            },
+        ])
+        assert result.get('telegram_sent') is True
+
+    @patch('tasks._notify_telegram_douyin_success_batch')
+    @patch('tasks._process_one_video_download_summary_delete')
+    @patch('tasks.get_videos_pending_summary')
+    def test_telegram_when_two_successes(self, mock_get, mock_one, mock_notify):
+        """When batch has multiple successes, notify once with all rows."""
+        from tasks import process_pending_videos
+
+        mock_notify.return_value = True
+        mock_get.return_value = [
+            {'video_id': 'a', 'share_link': 'x', 'short_link': '', 'local_file_path': None},
+            {'video_id': 'b', 'share_link': 'x', 'short_link': '', 'local_file_path': None},
+        ]
+        mock_one.return_value = {'status': 'completed', 'douyin_url': 'u', 'ai_reply': 't'}
+        result = process_pending_videos(batch_size=10)
+
+        assert result['completed'] == 2
+        mock_notify.assert_called_once_with([
+            {'video_id': 'a', 'douyin_url': 'u', 'ai_reply': 't'},
+            {'video_id': 'b', 'douyin_url': 'u', 'ai_reply': 't'},
+        ])
+        assert result.get('telegram_sent') is True
+
+    @patch('tasks._notify_telegram_douyin_success_batch')
+    @patch('tasks._process_one_video_download_summary_delete')
+    @patch('tasks.get_videos_pending_summary')
+    def test_no_telegram_when_zero_successes(self, mock_get, mock_one, mock_notify):
+        from tasks import process_pending_videos
+
+        mock_get.return_value = [
+            {'video_id': 'a', 'share_link': 'x', 'short_link': '', 'local_file_path': None},
+        ]
+        mock_one.return_value = {'status': 'failed', 'error': 'x'}
+        result = process_pending_videos(batch_size=10)
+
+        assert result['completed'] == 0
+        mock_notify.assert_not_called()
+        assert 'telegram_sent' not in result
+
+
+class TestProcessOneVideoPipeline:
+    """Merged pipeline: download → webgemini → delete."""
+
+    @patch('tasks.get_comments_for_video')
+    @patch('tasks._remove_local_file_and_clear_db')
+    @patch('tasks.update_video_summary_result')
+    @patch('tasks.create_or_update_video_summary')
+    @patch('tasks._poll_webgemini_chat')
+    @patch('tasks._submit_webgemini_chat')
+    @patch('tasks._compress_video_for_upload')
+    @patch('tasks._download_one_video')
+    @patch('tasks._resolve_video_path')
+    def test_downloads_when_no_local_file(
+        self, mock_resolve, mock_dl, mock_compress, mock_submit, mock_poll,
+        mock_create, mock_update, mock_remove, mock_comments,
+    ):
+        from tasks import _process_one_video_download_summary_delete
+
+        mock_resolve.return_value = None
+        mock_dl.return_value = (True, '/tmp/douyin_vid.mp4', None)
+        mock_compress.return_value = '/tmp/douyin_vid_compressed.mp4'
+        mock_submit.return_value = 'job1'
+        mock_poll.return_value = ('completed', 'summary text', None)
+        mock_comments.return_value = []
+
+        video = {
+            'video_id': 'vid1',
+            'share_link': 'https://www.douyin.com/video/vid1',
+            'short_link': '',
+            'local_file_path': None,
+        }
         with patch('os.path.isfile', return_value=True):
-            result = _execute_submit('vid1', {})
+            out = _process_one_video_download_summary_delete(video)
 
-        assert result['webgemini_job_id'] == 'job_abc123'
-        assert result['status'] == 'success'
+        assert out['status'] == 'completed'
+        mock_dl.assert_called_once()
+        mock_compress.assert_called_once_with('/tmp/douyin_vid.mp4')
         mock_submit.assert_called_once()
+        call_prompt, call_paths = mock_submit.call_args[0]
+        assert '高赞评论' in call_prompt
+        assert call_paths == ['/tmp/douyin_vid_compressed.mp4']
+        mock_remove.assert_called_once()
 
-    @patch('tasks.complete_step')
-    @patch('tasks.start_step')
-    def test_fails_without_local_file(self, mock_start, mock_complete):
-        """Submit should fail when video has no local file."""
-        from tasks import _execute_submit
+    @patch('tasks.get_comments_for_video')
+    @patch('tasks._remove_local_file_and_clear_db')
+    @patch('tasks._compress_video_for_upload')
+    @patch('tasks._download_one_video')
+    @patch('tasks._resolve_video_path')
+    def test_skips_download_when_file_exists(
+        self, mock_resolve, mock_dl, mock_compress, mock_remove, mock_comments,
+    ):
+        from tasks import _process_one_video_download_summary_delete
 
-        with patch('tasks.get_video_by_id_with_local_path', return_value=None):
-            with pytest.raises(ValueError, match='not found or has no local_file_path'):
-                _execute_submit('vid1', {})
+        mock_resolve.return_value = '/existing/vid.mp4'
+        mock_compress.return_value = '/existing/vid_compressed.mp4'
+        mock_comments.return_value = []
+        with patch('tasks._submit_webgemini_chat', return_value='j') as mock_submit, \
+                patch('tasks.create_or_update_video_summary'), \
+                patch('tasks._poll_webgemini_chat', return_value=('completed', 't', None)), \
+                patch('tasks.update_video_summary_result'), \
+                patch('os.path.isfile', return_value=True):
+            out = _process_one_video_download_summary_delete({
+                'video_id': 'v',
+                'share_link': 'https://www.douyin.com/video/v',
+                'short_link': '',
+                'local_file_path': '/existing/vid.mp4',
+            })
+
+        assert out['status'] == 'completed'
+        mock_dl.assert_not_called()
+        mock_compress.assert_called_once_with('/existing/vid.mp4')
+        mock_submit.assert_called_once()
+        assert '转发/分享数' in mock_submit.call_args[0][0]
+        assert mock_submit.call_args[0][1] == ['/existing/vid_compressed.mp4']
+        mock_remove.assert_called_once()
 
 
-class TestExecuteGetSummary:
-    """Test the get_summary step execution (webgemini)."""
+class TestCompressionAndUploadPath:
+    """Integration-style test for compress -> upload -> poll path."""
 
-    @patch('tasks.update_video_summary_result')
-    @patch('tasks._poll_webgemini_chat')
-    @patch('tasks.complete_step')
-    @patch('tasks.start_step')
-    def test_polls_webgemini_and_returns_summary(self, mock_start, mock_complete, mock_poll, mock_update):
-        """Get summary should poll webgemini and store result."""
-        from tasks import _execute_get_summary
+    def test_compresses_and_uploads_sample_video(self):
+        from tasks import (
+            _build_webgemini_summary_prompt,
+            _compress_video_for_upload,
+            _poll_webgemini_chat,
+            _submit_webgemini_chat,
+        )
 
-        mock_poll.return_value = ('completed', '这是视频的概括内容', None)
-        submit_result = {'webgemini_job_id': 'job_abc123'}
+        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sample_video = os.path.join(
+            repo_root, 'worker', 'downloads', 'douyin_7607831118478603402.mp4',
+        )
+        assert os.path.isfile(sample_video), f"Sample video missing: {sample_video}"
+        assert os.path.getsize(sample_video) >= 40 * 1024 * 1024, "Sample video should be a larger MP4"
 
-        result = _execute_get_summary('vid1', submit_result)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_video = os.path.join(tmpdir, 'sample.mp4')
+            shutil.copyfile(sample_video, temp_video)
+            compressed_path = _compress_video_for_upload(temp_video)
+            assert compressed_path.endswith('_compressed.mp4')
+            assert os.path.isfile(compressed_path)
 
-        assert result['summary'] == '这是视频的概括内容'
-        assert result['status'] == 'success'
-        mock_poll.assert_called_once_with('job_abc123')
-        mock_update.assert_called_once_with('vid1', '这是视频的概括内容', status='completed')
+            try:
+                prompt = _build_webgemini_summary_prompt(
+                    {'video_id': 'integration-test'}, [],
+                )
+                job_id = _submit_webgemini_chat(prompt, [compressed_path])
+                assert job_id
 
-    @patch('tasks.update_video_summary_result')
-    @patch('tasks._poll_webgemini_chat')
-    @patch('tasks.complete_step')
-    @patch('tasks.start_step')
-    def test_handles_failed_poll(self, mock_start, mock_complete, mock_poll, mock_update):
-        """Get summary should handle failed webgemini poll."""
-        from tasks import _execute_get_summary
+                # Real integration polling against WebGemini until terminal status.
+                status, text, error = _poll_webgemini_chat(
+                    job_id,
+                    poll_interval=int(os.getenv('TEST_WEBGEMINI_POLL_INTERVAL', '5')),
+                    max_wait=int(os.getenv('TEST_WEBGEMINI_MAX_WAIT', '2400')),
+                )
 
-        mock_poll.return_value = ('failed', None, 'API error')
-        submit_result = {'webgemini_job_id': 'job_abc123'}
+                assert status in ('completed', 'failed')
+                if status == 'completed':
+                    assert text
+                    assert not error
+                else:
+                    assert error
+            finally:
+                if os.path.exists(compressed_path):
+                    os.remove(compressed_path)
 
-        result = _execute_get_summary('vid1', submit_result)
-
-        assert result['status'] == 'failed'
-        assert result['error'] == 'API error'
+            assert os.path.exists(temp_video)
+            assert not os.path.exists(compressed_path)
 
 
 class TestResetStaleTasks:
@@ -266,32 +265,6 @@ class TestResetStaleTasks:
 
         mock_db_reset.assert_called_once_with(hours=24)
         assert result['status'] == 'completed'
-
-
-class TestTriggerBatchNow:
-    """Test manual batch trigger."""
-
-    @patch('tasks.process_pending_videos')
-    def test_delegates_to_process_pending(self, mock_process):
-        """Should call process_pending_videos with batch_size."""
-        from tasks import trigger_batch_now
-
-        mock_process.return_value = {'queued': 5}
-
-        result = trigger_batch_now(batch_size=10)
-
-        mock_process.assert_called_once_with(10)
-
-
-class TestStepOrder:
-    """Test that steps are executed in correct order."""
-
-    def test_steps_constant_order(self):
-        """STEPS should be in correct order."""
-        from tasks import STEPS
-
-        assert STEPS == ['download', 'submit', 'get_summary']
-        assert len(STEPS) == 3
 
 
 if __name__ == '__main__':

@@ -7,6 +7,7 @@ REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 WORKER_DIR="$REPO_DIR/worker"
 PID_FILE="$REPO_DIR/celery.pid"
 LOG_FILE="$REPO_DIR/celery.log"
+START_TIMEOUT="${DOUYIN_CRAWLER_START_TIMEOUT:-20}"
 
 cd "$WORKER_DIR"
 
@@ -19,9 +20,57 @@ if [ -f "$PID_FILE" ]; then
   rm -f "$PID_FILE"
 fi
 
+wait_until_ready() {
+  local service_pid="$1"
+  local elapsed=0
+  while [ "$elapsed" -lt "$START_TIMEOUT" ]; do
+    if ! kill -0 "$service_pid" 2>/dev/null; then
+      return 1
+    fi
+    if grep -q 'ready\.' "$LOG_FILE" 2>/dev/null; then
+      return 0
+    fi
+    sleep 1
+    elapsed=$((elapsed + 1))
+  done
+  return 1
+}
+
+start_detached() {
+  python3 - "$LOG_FILE" <<'PY'
+import subprocess
+import sys
+
+log_file = sys.argv[1]
+with open(log_file, "ab", buffering=0) as log:
+    proc = subprocess.Popen(
+        ["uv", "run", "celery", "-A", "celery_app", "worker", "--beat", "--loglevel=info", "--concurrency=1"],
+        stdin=subprocess.DEVNULL,
+        stdout=log,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+print(proc.pid)
+PY
+}
+
 echo "Starting Celery (worker + beat, concurrency=1 for webgemini)..."
-nohup uv run celery -A celery_app worker --beat --loglevel=info --concurrency=1 >> "$LOG_FILE" 2>&1 &
-echo $! > "$PID_FILE"
+start_detached > "$PID_FILE"
+
+if ! wait_until_ready "$(cat "$PID_FILE")"; then
+  echo "Celery failed to become ready within ${START_TIMEOUT}s."
+  PID="$(cat "$PID_FILE")"
+  kill "$PID" 2>/dev/null || true
+  sleep 1
+  if kill -0 "$PID" 2>/dev/null; then
+    kill -9 "$PID" 2>/dev/null || true
+  fi
+  rm -f "$PID_FILE"
+  echo "Recent logs:"
+  tail -n 40 "$LOG_FILE" 2>/dev/null || true
+  exit 1
+fi
+
 echo "✓ Celery started (PID: $(cat $PID_FILE))"
 echo "  Log: tail -f $LOG_FILE"
 echo "  Stop: ./scripts/stop-celery.sh"

@@ -2,7 +2,7 @@
 
 ## 目标
 
-抖音视频爬取与处理管道系统。通过 Node.js 爬虫采集抖音热门视频元数据存入 PostgreSQL，由 Celery Worker 异步执行 **download → submit → get_summary** 三步管道，最终产出视频摘要。
+抖音视频爬取与处理管道系统。通过 Node.js 爬虫采集抖音热门视频元数据存入 PostgreSQL，由 Celery Worker 对每条视频在同一任务内完成 **下载 → WebGemini 概括 → 删除本地视频文件**，最终只在库中保留文本摘要。
 
 ## 使用场景
 

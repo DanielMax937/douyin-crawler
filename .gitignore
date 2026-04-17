@@ -4,6 +4,8 @@ browser-profile/
 output/
 .DS_Store
 scraper.log
+celery.log
+worker/celery.log
 worker.log
 worker-trigger.log
 worker-reset.log
