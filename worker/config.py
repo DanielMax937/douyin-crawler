@@ -21,10 +21,14 @@ SCHEDULE_MINUTE = int(os.getenv('SCHEDULE_MINUTE', '0'))
 
 # Batch size for processing
 BATCH_SIZE = int(os.getenv('BATCH_SIZE', '20'))
+STALE_PROCESSING_HOURS = int(os.getenv('STALE_PROCESSING_HOURS', '24'))
+ORPHAN_FILE_GRACE_HOURS = int(os.getenv('ORPHAN_FILE_GRACE_HOURS', '24'))
 
 # Download API (Douyin_TikTok_Download_API)
 DOWNLOAD_API_BASE_URL = os.getenv('DOWNLOAD_API_BASE_URL', 'http://127.0.0.1:8000')
 DOWNLOAD_SAVE_DIR = os.getenv('DOWNLOAD_SAVE_DIR', './downloads')
+# Skip oversized videos before writing to disk (default: 3 GiB)
+MAX_DOWNLOAD_SIZE_BYTES = int(os.getenv('MAX_DOWNLOAD_SIZE_BYTES', str(3 * 1024 * 1024 * 1024)))
 
 # WebGemini API (video analysis via chat with attachment)
 WEBGEMINI_API_URL = os.getenv('WEBGEMINI_API_URL', 'http://127.0.0.1:8200')
@@ -41,3 +45,12 @@ TELEGRAM_BOT_TOKEN = (os.getenv('TELEGRAM_BOT_TOKEN') or os.getenv('CTI_TG_BOT_T
 TELEGRAM_ALLOWED_CHAT_ID = (
     os.getenv('TELEGRAM_ALLOWED_CHAT_ID') or os.getenv('CTI_TG_CHAT_ID') or ''
 ).strip()
+
+# BitStripe: upload batch report .md before Telegram (same script as bitstripe-uploader skill)
+_default_bitstripe_script = os.path.join(
+    os.path.expanduser('~'), '.cursor', 'skills', 'bitstripe-uploader', 'scripts', 'upload.sh',
+)
+BITSTRIPE_UPLOAD_SCRIPT = os.path.expanduser(
+    os.getenv('BITSTRIPE_UPLOAD_SCRIPT', _default_bitstripe_script),
+)
+BITSTRIPE_URL_PREFIX = os.getenv('BITSTRIPE_URL_PREFIX', 'https://www.bitstripe.cn/files/')

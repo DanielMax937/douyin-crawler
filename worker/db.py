@@ -347,3 +347,42 @@ def reset_stale_tasks(hours=24):
             conn.commit()
     finally:
         conn.close()
+
+
+def get_stale_processing_summaries(hours=24, limit=500):
+    """
+    Fetch stale summary rows stuck in processing for too long.
+    Returns video_id + current local_file_path for cleanup.
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT s.video_id, v.local_file_path
+                FROM douyin_video_summaries s
+                JOIN douyin_videos v ON v.video_id = s.video_id
+                WHERE s.status = 'processing'
+                  AND s.updated_at < NOW() - INTERVAL '1 hour' * %s
+                ORDER BY s.updated_at ASC
+                LIMIT %s
+            """, (hours, limit))
+            return cur.fetchall()
+    finally:
+        conn.close()
+
+
+def get_nonempty_video_local_paths():
+    """Return all non-empty local_file_path values currently referenced in DB."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT local_file_path
+                FROM douyin_videos
+                WHERE local_file_path IS NOT NULL
+                  AND local_file_path != ''
+            """)
+            rows = cur.fetchall()
+            return [row[0] for row in rows]
+    finally:
+        conn.close()

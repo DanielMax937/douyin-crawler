@@ -28,6 +28,10 @@ app.conf.beat_schedule = {
         'task': 'tasks.reset_stale_tasks',
         'schedule': crontab(hour='*/6'),  # Every 6 hours
     },
+    'cleanup-orphan-download-files': {
+        'task': 'tasks.cleanup_orphan_download_files',
+        'schedule': crontab(hour='*/6', minute=20),  # Every 6 hours, staggered from reset
+    },
     'scrape-douyin-daily': {
         'task': 'tasks.scrape_douyin_daily',
         'schedule': crontab(hour=2, minute=0),  # 每天凌晨 2 点（原 crontab）

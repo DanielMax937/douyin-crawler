@@ -37,6 +37,8 @@ class TestProcessPendingVideos:
 
         assert result['total'] == 2
         assert result['completed'] == 2
+        assert result.get('failed') == 0
+        assert result.get('skipped_too_large') == 0
         assert mock_one.call_count == 2
         mock_notify.assert_called_once_with([
             {'video_id': 'vid1', 'douyin_url': 'https://example.com/v', 'ai_reply': 'ok'},
@@ -75,6 +77,7 @@ class TestProcessPendingVideos:
         result = process_pending_videos(batch_size=10)
 
         assert result['completed'] == 1
+        assert result.get('skipped_too_large') == 0
         mock_notify.assert_called_once_with([
             {
                 'video_id': 'v1',
@@ -100,6 +103,7 @@ class TestProcessPendingVideos:
         result = process_pending_videos(batch_size=10)
 
         assert result['completed'] == 2
+        assert result.get('skipped_too_large') == 0
         mock_notify.assert_called_once_with([
             {'video_id': 'a', 'douyin_url': 'u', 'ai_reply': 't'},
             {'video_id': 'b', 'douyin_url': 'u', 'ai_reply': 't'},
@@ -119,8 +123,34 @@ class TestProcessPendingVideos:
         result = process_pending_videos(batch_size=10)
 
         assert result['completed'] == 0
+        assert result.get('failed') == 1
+        assert result.get('skipped_too_large') == 0
         mock_notify.assert_not_called()
         assert 'telegram_sent' not in result
+
+    @patch('tasks._notify_telegram_douyin_success_batch')
+    @patch('tasks._process_one_video_download_summary_delete')
+    @patch('tasks.get_videos_pending_summary')
+    def test_skipped_too_large_count(self, mock_get, mock_one, mock_notify):
+        """Oversized download skip should increment skipped_too_large, not failed."""
+        from tasks import process_pending_videos, SKIP_DOWNLOAD_TOO_LARGE_PREFIX
+
+        mock_get.return_value = [
+            {'video_id': 'big1', 'share_link': 'x', 'short_link': '', 'local_file_path': None},
+        ]
+        mock_one.return_value = {
+            'status': 'failed',
+            'video_id': 'big1',
+            'error': f'{SKIP_DOWNLOAD_TOO_LARGE_PREFIX} content-length 999 bytes exceeds limit 1 bytes',
+            'skip_reason': 'too_large',
+        }
+        result = process_pending_videos(batch_size=10)
+
+        assert result['skipped_too_large'] == 1
+        assert result['failed'] == 0
+        assert result['completed'] == 0
+        assert result['results'][0]['status'] == 'skipped_too_large'
+        mock_notify.assert_not_called()
 
 
 class TestProcessOneVideoPipeline:
@@ -253,18 +283,73 @@ class TestCompressionAndUploadPath:
             assert not os.path.exists(compressed_path)
 
 
+class TestTelegramBitstripeBatchNotify:
+    """Batch Telegram: save .md → bitstripe upload.sh → send URL (or fallback to full body)."""
+
+    @patch('tasks._send_telegram_plain')
+    @patch('tasks._upload_file_via_bitstripe')
+    @patch('tasks._write_telegram_batch_report_md')
+    def test_sends_short_message_with_url_when_upload_ok(self, mock_write, mock_upload, mock_send):
+        from tasks import _notify_telegram_douyin_success_batch
+
+        mock_write.return_value = '/tmp/douyin-crawler-batch-test.md'
+        mock_upload.return_value = 'https://www.bitstripe.cn/files/douyin-crawler-batch-test.md'
+        mock_send.return_value = True
+        items = [
+            {'video_id': 'v1', 'douyin_url': 'https://d.com/v1', 'ai_reply': 'secret-long-ai-text-' * 50},
+        ]
+        ok = _notify_telegram_douyin_success_batch(items)
+
+        assert ok is True
+        mock_send.assert_called_once()
+        sent = mock_send.call_args[0][0]
+        assert 'https://www.bitstripe.cn/files/douyin-crawler-batch-test.md' in sent
+        assert '完整报告:' in sent
+        assert 'secret-long-ai-text-' not in sent
+
+    @patch('tasks._send_telegram_plain')
+    @patch('tasks._upload_file_via_bitstripe')
+    @patch('tasks._write_telegram_batch_report_md')
+    def test_fallback_sends_full_body_when_upload_fails(self, mock_write, mock_upload, mock_send):
+        from tasks import _notify_telegram_douyin_success_batch
+
+        mock_write.return_value = '/tmp/x.md'
+        mock_upload.return_value = None
+        mock_send.return_value = True
+        items = [
+            {'video_id': 'v1', 'douyin_url': 'u', 'ai_reply': 'fallback-body-marker'},
+        ]
+        ok = _notify_telegram_douyin_success_batch(items)
+
+        assert ok is True
+        sent = mock_send.call_args[0][0]
+        assert 'fallback-body-marker' in sent
+        assert '完整报告:' not in sent
+
+
 class TestResetStaleTasks:
     """Test the reset stale tasks Celery task."""
 
+    @patch('tasks.update_video_summary_result')
+    @patch('tasks._remove_local_file_and_clear_db')
+    @patch('tasks.get_stale_processing_summaries')
     @patch('tasks.db_reset_stale_tasks')
-    def test_calls_db_reset(self, mock_db_reset):
-        """Should call db reset function with 24 hours."""
+    def test_calls_db_reset(self, mock_db_reset, mock_get_stale, mock_remove_local, mock_update_summary):
+        """Should reset stale task tables and stale processing summaries."""
         from tasks import reset_stale_tasks
 
+        mock_get_stale.return_value = [
+            {'video_id': 'v1', 'local_file_path': '/tmp/v1.mp4'},
+            {'video_id': 'v2', 'local_file_path': ''},
+        ]
         result = reset_stale_tasks()
 
-        mock_db_reset.assert_called_once_with(hours=24)
+        mock_db_reset.assert_called_once()
+        mock_get_stale.assert_called_once()
+        assert mock_remove_local.call_count == 2
+        assert mock_update_summary.call_count == 2
         assert result['status'] == 'completed'
+        assert result['stale_summary_reset'] == 2
 
 
 if __name__ == '__main__':

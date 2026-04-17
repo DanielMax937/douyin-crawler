@@ -4,6 +4,8 @@ from db import (
     get_video_by_id_for_processing,
     get_comments_for_video,
     reset_stale_tasks as db_reset_stale_tasks,
+    get_stale_processing_summaries,
+    get_nonempty_video_local_paths,
     update_video_local_path,
     create_or_update_video_summary,
     update_video_summary_result,
@@ -24,32 +26,49 @@ try:
     from config import (
         DOWNLOAD_API_BASE_URL,
         DOWNLOAD_SAVE_DIR,
+        MAX_DOWNLOAD_SIZE_BYTES,
         ENABLE_VIDEO_COMPRESSION,
         VIDEO_COMPRESSION_CRF,
         VIDEO_COMPRESSION_PRESET,
         WEBGEMINI_API_URL,
         WEBGEMINI_POLL_INTERVAL,
         WEBGEMINI_POLL_MAX_WAIT,
+        STALE_PROCESSING_HOURS,
+        ORPHAN_FILE_GRACE_HOURS,
         TELEGRAM_BOT_TOKEN,
         TELEGRAM_ALLOWED_CHAT_ID,
+        BITSTRIPE_UPLOAD_SCRIPT,
+        BITSTRIPE_URL_PREFIX,
     )
 except ImportError:
     DOWNLOAD_API_BASE_URL = 'http://127.0.0.1:8000'
     DOWNLOAD_SAVE_DIR = './downloads'
+    MAX_DOWNLOAD_SIZE_BYTES = 3 * 1024 * 1024 * 1024
     WEBGEMINI_API_URL = 'http://127.0.0.1:8200'
     WEBGEMINI_POLL_INTERVAL = 5
     WEBGEMINI_POLL_MAX_WAIT = 1800
+    STALE_PROCESSING_HOURS = 24
+    ORPHAN_FILE_GRACE_HOURS = 24
     ENABLE_VIDEO_COMPRESSION = True
     VIDEO_COMPRESSION_CRF = 32
     VIDEO_COMPRESSION_PRESET = 'veryfast'
     TELEGRAM_BOT_TOKEN = ''
     TELEGRAM_ALLOWED_CHAT_ID = ''
+    BITSTRIPE_UPLOAD_SCRIPT = os.path.join(
+        os.path.expanduser('~'), '.cursor', 'skills', 'bitstripe-uploader', 'scripts', 'upload.sh',
+    )
+    BITSTRIPE_URL_PREFIX = 'https://www.bitstripe.cn/files/'
 
 # Repo root (parent of worker/)
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WORKER_DIR = os.path.dirname(os.path.abspath(__file__))
+TELEGRAM_EXPORTS_DIR = os.path.join(WORKER_DIR, 'telegram_exports')
 SCRAPER_SCRIPT = os.path.join(REPO_DIR, 'douyin-scraper.js')
 
 logger = logging.getLogger(__name__)
+
+# Prefixed download error when Content-Length exceeds MAX_DOWNLOAD_SIZE_BYTES (for batch stats).
+SKIP_DOWNLOAD_TOO_LARGE_PREFIX = 'SKIP_DOWNLOAD_TOO_LARGE:'
 
 
 def parse_video_id_from_url(url):
@@ -193,6 +212,21 @@ def _download_one_video(video):
         with urllib.request.urlopen(f"{download_url}?{params}", timeout=300) as resp:
             if resp.status != 200:
                 return False, None, f"HTTP {resp.status}"
+            content_length = resp.headers.get('Content-Length')
+            if content_length:
+                try:
+                    size_bytes = int(content_length)
+                except ValueError:
+                    size_bytes = None
+                if size_bytes and size_bytes > MAX_DOWNLOAD_SIZE_BYTES:
+                    logger.warning(
+                        "Skip download for %s: content-length %s exceeds limit %s",
+                        video_id, size_bytes, MAX_DOWNLOAD_SIZE_BYTES,
+                    )
+                    return False, None, (
+                        f"{SKIP_DOWNLOAD_TOO_LARGE_PREFIX} content-length {size_bytes} bytes "
+                        f"exceeds limit {MAX_DOWNLOAD_SIZE_BYTES} bytes"
+                    )
             with open(file_path, 'wb') as f:
                 f.write(resp.read())
         update_video_local_path(video_id, file_path)
@@ -314,6 +348,91 @@ def _poll_webgemini_chat(job_id, poll_interval=WEBGEMINI_POLL_INTERVAL, max_wait
 TELEGRAM_MAX_MESSAGE_LEN = 4096
 
 
+def _build_douyin_batch_telegram_body(items):
+    """
+    Build the full plaintext/markdown body for a successful batch (same as legacy Telegram content).
+    items: list of dicts with keys video_id, douyin_url, ai_reply.
+    """
+    if not items:
+        return ''
+    n = len(items)
+    lines = [
+        f'douyin-crawler 视频解析完成（本批成功 {n} 条）',
+        '',
+    ]
+    for it in items:
+        lines.append(f"video_id: {it.get('video_id', '—')}")
+        lines.append(f"链接: {it.get('douyin_url', '—')}")
+        lines.append('')
+        lines.append('AI 回复:')
+        lines.append(it.get('ai_reply') or '（空）')
+        lines.append('')
+    return '\n'.join(lines).rstrip()
+
+
+def _write_telegram_batch_report_md(body):
+    """
+    Persist batch report to a new .md under worker/telegram_exports/.
+    Returns absolute path to the file.
+    """
+    os.makedirs(TELEGRAM_EXPORTS_DIR, exist_ok=True)
+    ts = datetime.now().strftime('%Y%m%d-%H%M%S')
+    name = f'douyin-crawler-batch-{ts}.md'
+    path = os.path.join(TELEGRAM_EXPORTS_DIR, name)
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(body)
+        if not body.endswith('\n'):
+            f.write('\n')
+    logger.info("Saved Telegram batch report to %s", path)
+    return path
+
+
+def _upload_file_via_bitstripe(local_path):
+    """
+    Upload a local file using the bitstripe-uploader skill script (scp + public URL on stdout).
+    Returns HTTPS URL or None on failure.
+    """
+    script = (BITSTRIPE_UPLOAD_SCRIPT or '').strip()
+    if not script or not os.path.isfile(script):
+        logger.warning(
+            "BitStripe upload skipped: script missing or not a file (%s). "
+            "Install ~/.cursor/skills/bitstripe-uploader/scripts/upload.sh or set BITSTRIPE_UPLOAD_SCRIPT.",
+            script or '(empty)',
+        )
+        return None
+    try:
+        completed = subprocess.run(
+            ['bash', script, local_path],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        logger.error("BitStripe upload timed out for %s", local_path)
+        return None
+    except Exception as e:
+        logger.exception("BitStripe upload failed: %s", e)
+        return None
+    if completed.returncode != 0:
+        err = (completed.stderr or completed.stdout or '').strip()
+        logger.error(
+            "BitStripe upload.sh exit %s for %s: %s",
+            completed.returncode,
+            local_path,
+            err[:500],
+        )
+        return None
+    url = (completed.stdout or '').strip().splitlines()
+    url = url[-1].strip() if url else ''
+    prefix = (BITSTRIPE_URL_PREFIX or 'https://www.bitstripe.cn/files/').strip()
+    if not url.startswith(prefix):
+        logger.error("BitStripe upload unexpected stdout (expected URL with prefix %s): %s", prefix, url[:200])
+        return None
+    logger.info("BitStripe upload ok: %s", url)
+    return url
+
+
 def _split_telegram_text(text):
     if not text:
         return ['']
@@ -358,25 +477,29 @@ def _send_telegram_plain(text):
 
 def _notify_telegram_douyin_success_batch(items):
     """
-    After process_pending_videos, if at least one video succeeded, send each link + AI reply.
+    After process_pending_videos, if at least one video succeeded:
+    save full report to a new .md, upload via bitstripe upload.sh, send the public URL to Telegram.
+    If upload fails, fall back to sending the full report as plain text (legacy behavior).
     items: list of dicts with keys video_id, douyin_url, ai_reply.
     """
     if not items:
         return False
     n = len(items)
-    lines = [
-        f'douyin-crawler 视频解析完成（本批成功 {n} 条）',
-        '',
-    ]
-    for it in items:
-        lines.append(f"video_id: {it.get('video_id', '—')}")
-        lines.append(f"链接: {it.get('douyin_url', '—')}")
-        lines.append('')
-        lines.append('AI 回复:')
-        lines.append(it.get('ai_reply') or '（空）')
-        lines.append('')
-    body = '\n'.join(lines).rstrip()
-    ok = _send_telegram_plain(body)
+    body = _build_douyin_batch_telegram_body(items)
+    md_path = _write_telegram_batch_report_md(body)
+    public_url = _upload_file_via_bitstripe(md_path)
+    if public_url:
+        telegram_text = (
+            f'douyin-crawler 视频解析完成（本批成功 {n} 条）\n'
+            f'完整报告: {public_url}'
+        )
+    else:
+        logger.warning(
+            "Sending full batch text on Telegram (BitStripe upload unavailable); see local file %s",
+            md_path,
+        )
+        telegram_text = body
+    ok = _send_telegram_plain(telegram_text)
     if ok:
         logger.info("Telegram notification sent for douyin summary batch (%s success)", n)
     return ok
@@ -399,7 +522,11 @@ def _process_one_video_download_summary_delete(video):
                 create_or_update_video_summary(
                     video_id, douyin_url, status='failed',
                 )
-                return {'status': 'failed', 'video_id': video_id, 'error': err or 'download failed'}
+                err_msg = err or 'download failed'
+                out = {'status': 'failed', 'video_id': video_id, 'error': err_msg}
+                if err_msg.startswith(SKIP_DOWNLOAD_TOO_LARGE_PREFIX):
+                    out['skip_reason'] = 'too_large'
+                return out
 
             local_path = path
 
@@ -458,6 +585,7 @@ def process_pending_videos(self, batch_size=20):
 
     completed = 0
     failed = 0
+    skipped_too_large = 0
     results = []
     success_rows = []
 
@@ -473,6 +601,13 @@ def process_pending_videos(self, batch_size=20):
                     'video_id': video_id,
                     'douyin_url': outcome.get('douyin_url') or '',
                     'ai_reply': outcome.get('ai_reply') or '',
+                })
+            elif outcome.get('skip_reason') == 'too_large':
+                skipped_too_large += 1
+                results.append({
+                    'video_id': video_id,
+                    'status': 'skipped_too_large',
+                    'error': outcome.get('error', ''),
                 })
             else:
                 failed += 1
@@ -493,6 +628,7 @@ def process_pending_videos(self, batch_size=20):
     out = {
         'completed': completed,
         'failed': failed,
+        'skipped_too_large': skipped_too_large,
         'total': len(videos),
         'results': results,
         'timestamp': datetime.now().isoformat(),
@@ -514,9 +650,83 @@ def process_one_video_summary(self, video_id):
 @app.task(name='tasks.reset_stale_tasks')
 def reset_stale_tasks():
     """Reset tasks that have been stuck in processing state."""
-    logger.info("Resetting stale tasks")
-    db_reset_stale_tasks(hours=24)
-    return {'status': 'completed', 'timestamp': datetime.now().isoformat()}
+    logger.info("Resetting stale tasks and stale processing summaries")
+    db_reset_stale_tasks(hours=STALE_PROCESSING_HOURS)
+    stale_rows = get_stale_processing_summaries(hours=STALE_PROCESSING_HOURS, limit=500)
+    stale_summary_reset = 0
+    stale_files_removed = 0
+    for row in stale_rows:
+        video_id = row['video_id']
+        local_path = _resolve_video_path(row.get('local_file_path') or '')
+        had_file = bool(local_path and os.path.isfile(local_path))
+        _remove_local_file_and_clear_db(video_id, local_path)
+        if had_file:
+            stale_files_removed += 1
+        update_video_summary_result(
+            video_id,
+            'Timeout - reset by scheduler',
+            status='failed',
+        )
+        stale_summary_reset += 1
+    return {
+        'status': 'completed',
+        'timestamp': datetime.now().isoformat(),
+        'stale_summary_reset': stale_summary_reset,
+        'stale_files_removed': stale_files_removed,
+    }
+
+
+@app.task(name='tasks.cleanup_orphan_download_files')
+def cleanup_orphan_download_files():
+    """
+    Remove old files under DOWNLOAD_SAVE_DIR that are no longer referenced by DB local_file_path.
+    """
+    download_dir = _get_download_dir()
+    if not os.path.isdir(download_dir):
+        return {
+            'status': 'completed',
+            'timestamp': datetime.now().isoformat(),
+            'removed': 0,
+            'scanned': 0,
+            'reason': f'download dir missing: {download_dir}',
+        }
+    referenced = set()
+    for path in get_nonempty_video_local_paths():
+        resolved = _resolve_video_path(path)
+        if resolved:
+            referenced.add(os.path.abspath(resolved))
+    now = time.time()
+    grace_seconds = max(1, ORPHAN_FILE_GRACE_HOURS) * 3600
+    removed = 0
+    scanned = 0
+    for name in os.listdir(download_dir):
+        if not name.startswith('douyin_') or not name.endswith('.mp4'):
+            continue
+        full_path = os.path.abspath(os.path.join(download_dir, name))
+        if not os.path.isfile(full_path):
+            continue
+        scanned += 1
+        if full_path in referenced:
+            continue
+        age_seconds = now - os.path.getmtime(full_path)
+        if age_seconds < grace_seconds:
+            continue
+        try:
+            os.remove(full_path)
+            removed += 1
+        except OSError as e:
+            logger.warning("Could not remove orphan file %s: %s", full_path, e)
+    logger.info(
+        "Orphan download cleanup completed: scanned=%s removed=%s dir=%s",
+        scanned, removed, download_dir,
+    )
+    return {
+        'status': 'completed',
+        'timestamp': datetime.now().isoformat(),
+        'scanned': scanned,
+        'removed': removed,
+        'download_dir': download_dir,
+    }
 
 
 @app.task(name='tasks.scrape_douyin_daily')
