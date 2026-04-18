@@ -17,11 +17,22 @@ app.conf.update(
     worker_prefetch_multiplier=1,  # Process one task at a time
 )
 
-# Scheduled tasks (Celery Beat)
+# Scheduled tasks (Celery Beat) — app timezone is Asia/Shanghai
 app.conf.beat_schedule = {
     'process-videos-daily': {
         'task': 'tasks.process_pending_videos',
         'schedule': crontab(hour=SCHEDULE_HOUR, minute=SCHEDULE_MINUTE),
+        'args': (BATCH_SIZE,),
+    },
+    # 中文语境「中午 12 点」与「晚上 6 点」各跑一批（与 daily 叠加）
+    'process-videos-noon-cn': {
+        'task': 'tasks.process_pending_videos',
+        'schedule': crontab(hour=12, minute=0),
+        'args': (BATCH_SIZE,),
+    },
+    'process-videos-evening-cn': {
+        'task': 'tasks.process_pending_videos',
+        'schedule': crontab(hour=18, minute=0),
         'args': (BATCH_SIZE,),
     },
     'reset-stale-tasks': {
