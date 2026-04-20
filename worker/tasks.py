@@ -19,6 +19,7 @@ import re
 import shutil
 import subprocess
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -39,11 +40,12 @@ try:
         TELEGRAM_ALLOWED_CHAT_ID,
         BITSTRIPE_UPLOAD_SCRIPT,
         BITSTRIPE_URL_PREFIX,
+        DOUYIN_DOWNLOAD_DIR,
     )
 except ImportError:
     DOWNLOAD_API_BASE_URL = 'http://127.0.0.1:8000'
     DOWNLOAD_SAVE_DIR = './downloads'
-    MAX_DOWNLOAD_SIZE_BYTES = 3 * 1024 * 1024 * 1024
+    MAX_DOWNLOAD_SIZE_BYTES = 2 * 1024 * 1024 * 1024
     WEBGEMINI_API_URL = 'http://127.0.0.1:8200'
     WEBGEMINI_POLL_INTERVAL = 5
     WEBGEMINI_POLL_MAX_WAIT = 1800
@@ -58,6 +60,9 @@ except ImportError:
         os.path.expanduser('~'), '.cursor', 'skills', 'bitstripe-uploader', 'scripts', 'upload.sh',
     )
     BITSTRIPE_URL_PREFIX = 'https://www.bitstripe.cn/files/'
+    DOUYIN_DOWNLOAD_DIR = os.path.normpath(
+        os.path.join(REPO_DIR, '..', 'Douyin_TikTok_Download_API', 'download')
+    )
 
 # Repo root (parent of worker/)
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -92,8 +97,9 @@ def parse_video_id_from_url(url):
 
 def _build_webgemini_summary_prompt(video, comments):
     """
-    Build prompt: video understanding + engagement stats + comments with per-comment likes,
-    and instructions for narrative + why video got likes + why top comments are liked.
+    Build prompt: video understanding + shooting/editing analysis + engagement stats + comments
+    with per-comment likes, and instructions for narrative + why video got likes + why top
+    comments are liked.
     video: dict from DB; comments: list of row dicts (username, content, time, location, likes).
     """
     def _s(val, default=''):
@@ -142,9 +148,10 @@ def _build_webgemini_summary_prompt(video, comments):
         '---',
         '请观看附件视频，用中文有条理地回答：',
         '1）视频内容：画面里发生了什么、主题是什么。',
-        '2）结合评论（若有）：评论者在讨论什么，与画面如何呼应；这条视频整体「记录了什么事情」。',
-        '3）为什么可能有这么高点赞：结合画面情绪、话题点与上方互动数据，分析视频为何容易引发点赞（说明你的推理依据）。',
-        '4）高赞评论：指出点赞数突出的一条或几条，概括其内容，并分析观众为什么特别「喜欢」这条评论（笑点、梗、共鸣、争议等）。若无评论文本，说明无法逐条分析，仅可结合视频推测可能的讨论方向。',
+        '2）拍摄与剪辑技法（请用影视专业术语作答）：按时间线指出在哪些节点（可用大致时间点或情节段落）运用了何种拍摄手法与剪辑/后期手法，并写出对应的专业称谓（例如希区柯克变焦、推轨、手持跟拍、浅景深、跳切、匹配剪辑、交叉剪辑、蒙太奇、升格/降格等）；说明各手法在叙事或情绪上的作用。若画面或剪辑特征不明显，请如实说明。',
+        '3）结合评论（若有）：评论者在讨论什么，与画面如何呼应；这条视频整体「记录了什么事情」。',
+        '4）为什么可能有这么高点赞：结合画面情绪、话题点与上方互动数据，分析视频为何容易引发点赞（说明你的推理依据）。',
+        '5）高赞评论：指出点赞数突出的一条或几条，概括其内容，并分析观众为什么特别「喜欢」这条评论（笑点、梗、共鸣、争议等）。若无评论文本，说明无法逐条分析，仅可结合视频推测可能的讨论方向。',
     ])
     return '\n'.join(lines)
 
@@ -196,6 +203,15 @@ def _build_download_url(video):
     return f"https://www.douyin.com/video/{video_id}"
 
 
+def _parse_content_length_header(value) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(str(value).strip())
+    except ValueError:
+        return None
+
+
 def _download_one_video(video):
     """
     Download one video via Douyin API; write file and set local_file_path.
@@ -208,36 +224,84 @@ def _download_one_video(video):
     file_path = os.path.normpath(os.path.join(download_dir, f"douyin_{video_id}.mp4"))
     download_url = f"{DOWNLOAD_API_BASE_URL.rstrip('/')}/api/download"
     params = f"url={urllib.parse.quote(url)}"
-    try:
-        with urllib.request.urlopen(f"{download_url}?{params}", timeout=300) as resp:
-            if resp.status != 200:
-                return False, None, f"HTTP {resp.status}"
-            content_length = resp.headers.get('Content-Length')
-            if content_length:
-                try:
-                    size_bytes = int(content_length)
-                except ValueError:
-                    size_bytes = None
-                if size_bytes and size_bytes > MAX_DOWNLOAD_SIZE_BYTES:
-                    logger.warning(
-                        "Skip download for %s: content-length %s exceeds limit %s",
-                        video_id, size_bytes, MAX_DOWNLOAD_SIZE_BYTES,
-                    )
-                    return False, None, (
-                        f"{SKIP_DOWNLOAD_TOO_LARGE_PREFIX} content-length {size_bytes} bytes "
-                        f"exceeds limit {MAX_DOWNLOAD_SIZE_BYTES} bytes"
-                    )
-            with open(file_path, 'wb') as f:
-                f.write(resp.read())
-        update_video_local_path(video_id, file_path)
-        return True, file_path, None
-    except Exception as e:
+    full_url = f"{download_url}?{params}"
+    declared_size: int | None = None
+    chunk_size = 1024 * 1024
+
+    def _remove_partial_file() -> None:
         if os.path.isfile(file_path):
             try:
                 os.remove(file_path)
             except OSError:
                 pass
-        logger.error("Download failed for %s: %s", video_id, e)
+
+    try:
+        with urllib.request.urlopen(full_url, timeout=300) as resp:
+            if resp.status != 200:
+                declared_size = _parse_content_length_header(resp.headers.get('Content-Length'))
+                logger.error(
+                    "Download failed for %s: HTTP %s (declared_content_length=%s)",
+                    video_id,
+                    resp.status,
+                    declared_size,
+                )
+                return False, None, f"HTTP {resp.status}"
+
+            declared_size = _parse_content_length_header(resp.headers.get('Content-Length'))
+            if declared_size is not None and declared_size > MAX_DOWNLOAD_SIZE_BYTES:
+                logger.warning(
+                    "Skip download for %s: content-length %s exceeds limit %s",
+                    video_id,
+                    declared_size,
+                    MAX_DOWNLOAD_SIZE_BYTES,
+                )
+                return False, None, (
+                    f"{SKIP_DOWNLOAD_TOO_LARGE_PREFIX} content-length {declared_size} bytes "
+                    f"exceeds limit {MAX_DOWNLOAD_SIZE_BYTES} bytes"
+                )
+
+            bytes_written = 0
+            try:
+                with open(file_path, 'wb') as out:
+                    while True:
+                        chunk = resp.read(chunk_size)
+                        if not chunk:
+                            break
+                        out.write(chunk)
+                        bytes_written += len(chunk)
+            except Exception as stream_err:
+                logger.error(
+                    "Download failed for %s (declared_content_length=%s, bytes_written=%s): %s",
+                    video_id,
+                    declared_size,
+                    bytes_written,
+                    stream_err,
+                )
+                _remove_partial_file()
+                return False, None, str(stream_err)
+
+        update_video_local_path(video_id, file_path)
+        return True, file_path, None
+    except urllib.error.HTTPError as e:
+        declared = _parse_content_length_header(
+            e.headers.get('Content-Length') if e.headers else None
+        )
+        logger.error(
+            "Download failed for %s: HTTP %s (declared_content_length=%s)",
+            video_id,
+            e.code,
+            declared,
+        )
+        _remove_partial_file()
+        return False, None, f"HTTP {e.code}"
+    except Exception as e:
+        _remove_partial_file()
+        logger.error(
+            "Download failed for %s (declared_content_length=%s): %s",
+            video_id,
+            declared_size,
+            e,
+        )
         return False, None, str(e)
 
 
@@ -442,6 +506,46 @@ def _split_telegram_text(text):
     ]
 
 
+def _purge_douyin_download_dir():
+    """
+    Remove files/subdirs under douyin-download's download dir after Telegram notification.
+    Keeps the root directory itself.
+    """
+    target = os.path.abspath(os.path.expanduser((DOUYIN_DOWNLOAD_DIR or '').strip()))
+    if not target:
+        return {'ok': False, 'reason': 'empty DOUYIN_DOWNLOAD_DIR'}
+    if not os.path.exists(target):
+        logger.info("Skip purge: DOUYIN_DOWNLOAD_DIR does not exist: %s", target)
+        return {'ok': True, 'removed_files': 0, 'removed_dirs': 0, 'target': target, 'reason': 'missing'}
+    if not os.path.isdir(target):
+        logger.warning("Skip purge: DOUYIN_DOWNLOAD_DIR is not a directory: %s", target)
+        return {'ok': False, 'reason': 'not_directory', 'target': target}
+
+    removed_files = 0
+    removed_dirs = 0
+    for name in os.listdir(target):
+        child = os.path.join(target, name)
+        try:
+            if os.path.isdir(child):
+                shutil.rmtree(child)
+                removed_dirs += 1
+            else:
+                os.remove(child)
+                removed_files += 1
+        except OSError as e:
+            logger.warning("Failed to remove %s during purge: %s", child, e)
+    logger.info(
+        "Purged douyin-download cache dir after Telegram notify: target=%s removed_files=%s removed_dirs=%s",
+        target, removed_files, removed_dirs,
+    )
+    return {
+        'ok': True,
+        'target': target,
+        'removed_files': removed_files,
+        'removed_dirs': removed_dirs,
+    }
+
+
 def _send_telegram_plain(text):
     """
     Send plain text via Telegram Bot API.
@@ -624,6 +728,7 @@ def process_pending_videos(self, batch_size=20):
     telegram_sent = None
     if success_rows:
         telegram_sent = _notify_telegram_douyin_success_batch(success_rows)
+    download_dir_purge = _purge_douyin_download_dir()
 
     out = {
         'completed': completed,
@@ -635,6 +740,8 @@ def process_pending_videos(self, batch_size=20):
     }
     if telegram_sent is not None:
         out['telegram_sent'] = telegram_sent
+    if download_dir_purge is not None:
+        out['download_dir_purge'] = download_dir_purge
     return out
 
 

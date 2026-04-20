@@ -7,7 +7,7 @@ REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 WORKER_DIR="$REPO_DIR/worker"
 PID_FILE="$REPO_DIR/celery.pid"
 LOG_FILE="$REPO_DIR/celery.log"
-START_TIMEOUT="${DOUYIN_CRAWLER_START_TIMEOUT:-20}"
+START_TIMEOUT="${DOUYIN_CRAWLER_START_TIMEOUT:-60}"
 
 cd "$WORKER_DIR"
 
@@ -23,11 +23,16 @@ fi
 wait_until_ready() {
   local service_pid="$1"
   local elapsed=0
+  local start_lines=0
+  if [ -f "$LOG_FILE" ]; then
+    start_lines=$(wc -l < "$LOG_FILE" | tr -d '[:space:]')
+  fi
   while [ "$elapsed" -lt "$START_TIMEOUT" ]; do
     if ! kill -0 "$service_pid" 2>/dev/null; then
       return 1
     fi
-    if grep -q 'ready\.' "$LOG_FILE" 2>/dev/null; then
+    # Only match "ready." from this boot (avoids stale grep if log was rotated/replaced).
+    if [ -f "$LOG_FILE" ] && tail -n +$((start_lines + 1)) "$LOG_FILE" 2>/dev/null | grep -q 'ready\.'; then
       return 0
     fi
     sleep 1
@@ -42,14 +47,29 @@ import subprocess
 import sys
 
 log_file = sys.argv[1]
-with open(log_file, "ab", buffering=0) as log:
-    proc = subprocess.Popen(
-        ["uv", "run", "celery", "-A", "celery_app", "worker", "--beat", "--loglevel=info", "--concurrency=1"],
-        stdin=subprocess.DEVNULL,
-        stdout=log,
-        stderr=subprocess.STDOUT,
-        start_new_session=True,
-    )
+# Celery opens the logfile itself (--logfile); do not shell-redirect stdout here.
+# Redirecting stdout to a path that is later replaced leaves processes writing a
+# detached inode while "celery.log" on disk appears frozen.
+open(log_file, "a").close()
+proc = subprocess.Popen(
+    [
+        "uv",
+        "run",
+        "celery",
+        "-A",
+        "celery_app",
+        "worker",
+        "--beat",
+        "--loglevel=info",
+        "--concurrency=1",
+        "--logfile",
+        log_file,
+    ],
+    stdin=subprocess.DEVNULL,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL,
+    start_new_session=True,
+)
 print(proc.pid)
 PY
 }

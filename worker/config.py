@@ -27,8 +27,8 @@ ORPHAN_FILE_GRACE_HOURS = int(os.getenv('ORPHAN_FILE_GRACE_HOURS', '24'))
 # Download API (Douyin_TikTok_Download_API)
 DOWNLOAD_API_BASE_URL = os.getenv('DOWNLOAD_API_BASE_URL', 'http://127.0.0.1:8000')
 DOWNLOAD_SAVE_DIR = os.getenv('DOWNLOAD_SAVE_DIR', './downloads')
-# Skip oversized videos before writing to disk (default: 3 GiB)
-MAX_DOWNLOAD_SIZE_BYTES = int(os.getenv('MAX_DOWNLOAD_SIZE_BYTES', str(3 * 1024 * 1024 * 1024)))
+# Skip oversized videos before writing to disk (default: 2 GiB)
+MAX_DOWNLOAD_SIZE_BYTES = int(os.getenv('MAX_DOWNLOAD_SIZE_BYTES', str(2 * 1024 * 1024 * 1024)))
 
 # WebGemini API (video analysis via chat with attachment)
 WEBGEMINI_API_URL = os.getenv('WEBGEMINI_API_URL', 'http://127.0.0.1:8200')
@@ -54,3 +54,14 @@ BITSTRIPE_UPLOAD_SCRIPT = os.path.expanduser(
     os.getenv('BITSTRIPE_UPLOAD_SCRIPT', _default_bitstripe_script),
 )
 BITSTRIPE_URL_PREFIX = os.getenv('BITSTRIPE_URL_PREFIX', 'https://www.bitstripe.cn/files/')
+
+# External douyin-download project cache dir to purge after Telegram notification
+_default_douyin_download_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    '..',
+    'Douyin_TikTok_Download_API',
+    'download',
+)
+DOUYIN_DOWNLOAD_DIR = os.path.expanduser(
+    os.getenv('DOUYIN_DOWNLOAD_DIR', _default_douyin_download_dir),
+)
