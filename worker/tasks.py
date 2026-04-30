@@ -69,6 +69,7 @@ REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WORKER_DIR = os.path.dirname(os.path.abspath(__file__))
 TELEGRAM_EXPORTS_DIR = os.path.join(WORKER_DIR, 'telegram_exports')
 SCRAPER_SCRIPT = os.path.join(REPO_DIR, 'douyin-scraper.js')
+SCRAPER_LOG_DIR = os.path.join(REPO_DIR, 'logs')
 
 logger = logging.getLogger(__name__)
 
@@ -846,32 +847,64 @@ def scrape_douyin_daily(count=100):
     logger.info("Starting scrape_douyin_daily: running node douyin-scraper.js %s", count)
     if not os.path.isfile(SCRAPER_SCRIPT):
         raise FileNotFoundError(f"Scraper script not found: {SCRAPER_SCRIPT}")
+    os.makedirs(SCRAPER_LOG_DIR, exist_ok=True)
+    started_at = datetime.now()
+    scraper_log_path = os.path.join(
+        SCRAPER_LOG_DIR,
+        f"douyin-scraper-{started_at.strftime('%Y%m%d-%H%M%S')}.log",
+    )
+    logger.info("Scraper stdout/stderr will be written to %s", scraper_log_path)
     try:
         env = os.environ.copy()
         env.setdefault('PGUSER', 'caoxiaopeng')
-        result = subprocess.run(
-            ['node', SCRAPER_SCRIPT, str(count)],
-            cwd=REPO_DIR,
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=None,
-        )
-        if result.returncode != 0:
-            logger.error("Scraper failed: %s", result.stderr or result.stdout)
+        with open(scraper_log_path, 'a', encoding='utf-8') as scraper_log:
+            scraper_log.write(
+                f"===== douyin-scraper start {started_at.isoformat()} count={count} =====\n"
+            )
+            scraper_log.flush()
+            process = subprocess.Popen(
+                ['node', SCRAPER_SCRIPT, str(count)],
+                cwd=REPO_DIR,
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+            )
+            assert process.stdout is not None
+            for line in process.stdout:
+                scraper_log.write(line)
+                scraper_log.flush()
+            returncode = process.wait()
+            finished_at = datetime.now()
+            scraper_log.write(
+                f"===== douyin-scraper end {finished_at.isoformat()} returncode={returncode} =====\n"
+            )
+            scraper_log.flush()
+        if returncode != 0:
+            log_tail = ''
+            try:
+                with open(scraper_log_path, 'r', encoding='utf-8', errors='replace') as scraper_log:
+                    log_tail = ''.join(scraper_log.readlines()[-80:])
+            except OSError as error:
+                log_tail = f'Could not read scraper log tail: {error}'
+            logger.error("Scraper failed with returncode=%s. Log: %s\n%s", returncode, scraper_log_path, log_tail)
             return {
                 'status': 'failed',
-                'returncode': result.returncode,
-                'stderr': result.stderr,
-                'stdout': result.stdout,
+                'returncode': returncode,
+                'log_path': scraper_log_path,
                 'timestamp': datetime.now().isoformat(),
             }
-        logger.info("Scraper completed successfully")
+        logger.info("Scraper completed successfully. Log: %s", scraper_log_path)
         return {
             'status': 'completed',
             'count': count,
+            'log_path': scraper_log_path,
             'timestamp': datetime.now().isoformat(),
         }
     except subprocess.TimeoutExpired:
         logger.error("Scraper timed out (should not happen with timeout=None)")
+        raise
+    except Exception:
+        logger.exception("Scraper crashed before completion. Log: %s", scraper_log_path)
         raise

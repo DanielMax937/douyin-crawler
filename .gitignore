@@ -1,4 +1,7 @@
 node_modules/
+*.log
+*.pid
+*.db
 *.pyc
 browser-profile/
 output/

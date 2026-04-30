@@ -1,0 +1,6 @@
+0 3 * * * cd /Users/caoxiaopeng/Desktop/githubsync && /opt/homebrew/bin/uv run python clone_github.py >> /Users/caoxiaopeng/Desktop/githubsync/clone.log 2>&1
+0 2 * * * curl -s -X POST 'http://localhost:3000/api/scrape?count=300' >> /Users/caoxiaopeng/Desktop/git/douyin-crawler/scraper-api.log 2>&1
+0 6 * * * curl -s -X POST 'http://127.0.0.1:9300/api/rednote' -H 'Content-Type: application/json' -d '{}' >> /Users/caoxiaopeng/Desktop/git/blog2media/cron-rednote.log 2>&1
+0 7 * * * curl -s -X POST 'http://127.0.0.1:9300/api/medium' -H 'Content-Type: application/json' -d '{}' >> /Users/caoxiaopeng/Desktop/git/blog2media/cron-medium.log 2>&1
+0 20 * * 1-5 curl -s -X POST 'http://127.0.0.1:9300/api/futures' -H 'Content-Type: application/json' -d '{}' >> /Users/caoxiaopeng/Desktop/git/blog2media/cron-futures.log 2>&1
+# 0 19 * * * /Users/caoxiaopeng/weibo/cron_export_mweibo.sh
