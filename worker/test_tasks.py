@@ -39,6 +39,7 @@ class TestProcessPendingVideos:
         assert result['completed'] == 2
         assert result.get('failed') == 0
         assert result.get('skipped_too_large') == 0
+        assert result.get('skipped_too_long') == 0
         assert mock_one.call_count == 2
         mock_notify.assert_called_once_with([
             {'video_id': 'vid1', 'douyin_url': 'https://example.com/v', 'ai_reply': 'ok'},
@@ -78,6 +79,7 @@ class TestProcessPendingVideos:
 
         assert result['completed'] == 1
         assert result.get('skipped_too_large') == 0
+        assert result.get('skipped_too_long') == 0
         mock_notify.assert_called_once_with([
             {
                 'video_id': 'v1',
@@ -104,6 +106,7 @@ class TestProcessPendingVideos:
 
         assert result['completed'] == 2
         assert result.get('skipped_too_large') == 0
+        assert result.get('skipped_too_long') == 0
         mock_notify.assert_called_once_with([
             {'video_id': 'a', 'douyin_url': 'u', 'ai_reply': 't'},
             {'video_id': 'b', 'douyin_url': 'u', 'ai_reply': 't'},
@@ -125,6 +128,7 @@ class TestProcessPendingVideos:
         assert result['completed'] == 0
         assert result.get('failed') == 1
         assert result.get('skipped_too_large') == 0
+        assert result.get('skipped_too_long') == 0
         mock_notify.assert_not_called()
         assert 'telegram_sent' not in result
 
@@ -152,6 +156,31 @@ class TestProcessPendingVideos:
         assert result['results'][0]['status'] == 'skipped_too_large'
         mock_notify.assert_not_called()
 
+    @patch('tasks._notify_telegram_douyin_success_batch')
+    @patch('tasks._process_one_video_download_summary_delete')
+    @patch('tasks.get_videos_pending_summary')
+    def test_skipped_too_long_count(self, mock_get, mock_one, mock_notify):
+        """Over-duration upload skip should increment skipped_too_long, not failed."""
+        from tasks import process_pending_videos, SKIP_UPLOAD_TOO_LONG_PREFIX
+
+        mock_get.return_value = [
+            {'video_id': 'long1', 'share_link': 'x', 'short_link': '', 'local_file_path': None},
+        ]
+        mock_one.return_value = {
+            'status': 'failed',
+            'video_id': 'long1',
+            'error': f'{SKIP_UPLOAD_TOO_LONG_PREFIX} duration 3601.000s exceeds limit 3600s',
+            'skip_reason': 'too_long',
+        }
+        result = process_pending_videos(batch_size=10)
+
+        assert result['skipped_too_long'] == 1
+        assert result['skipped_too_large'] == 0
+        assert result['failed'] == 0
+        assert result['completed'] == 0
+        assert result['results'][0]['status'] == 'skipped_too_long'
+        mock_notify.assert_not_called()
+
 
 class TestProcessOneVideoPipeline:
     """Merged pipeline: download → webgemini → delete."""
@@ -163,10 +192,11 @@ class TestProcessOneVideoPipeline:
     @patch('tasks._poll_webgemini_chat')
     @patch('tasks._submit_webgemini_chat')
     @patch('tasks._compress_video_for_upload')
+    @patch('tasks._assert_video_duration_within_upload_limit')
     @patch('tasks._download_one_video')
     @patch('tasks._resolve_video_path')
     def test_downloads_when_no_local_file(
-        self, mock_resolve, mock_dl, mock_compress, mock_submit, mock_poll,
+        self, mock_resolve, mock_dl, mock_duration, mock_compress, mock_submit, mock_poll,
         mock_create, mock_update, mock_remove, mock_comments,
     ):
         from tasks import _process_one_video_download_summary_delete
@@ -189,6 +219,7 @@ class TestProcessOneVideoPipeline:
 
         assert out['status'] == 'completed'
         mock_dl.assert_called_once()
+        mock_duration.assert_called_once_with('/tmp/douyin_vid.mp4')
         mock_compress.assert_called_once_with('/tmp/douyin_vid.mp4')
         mock_submit.assert_called_once()
         call_prompt, call_paths = mock_submit.call_args[0]
@@ -199,10 +230,11 @@ class TestProcessOneVideoPipeline:
     @patch('tasks.get_comments_for_video')
     @patch('tasks._remove_local_file_and_clear_db')
     @patch('tasks._compress_video_for_upload')
+    @patch('tasks._assert_video_duration_within_upload_limit')
     @patch('tasks._download_one_video')
     @patch('tasks._resolve_video_path')
     def test_skips_download_when_file_exists(
-        self, mock_resolve, mock_dl, mock_compress, mock_remove, mock_comments,
+        self, mock_resolve, mock_dl, mock_duration, mock_compress, mock_remove, mock_comments,
     ):
         from tasks import _process_one_video_download_summary_delete
 
@@ -223,10 +255,46 @@ class TestProcessOneVideoPipeline:
 
         assert out['status'] == 'completed'
         mock_dl.assert_not_called()
+        mock_duration.assert_called_once_with('/existing/vid.mp4')
         mock_compress.assert_called_once_with('/existing/vid.mp4')
         mock_submit.assert_called_once()
         assert '转发/分享数' in mock_submit.call_args[0][0]
         assert mock_submit.call_args[0][1] == ['/existing/vid_compressed.mp4']
+        mock_remove.assert_called_once()
+
+    @patch('tasks._remove_local_file_and_clear_db')
+    @patch('tasks.create_or_update_video_summary')
+    @patch('tasks._compress_video_for_upload')
+    @patch('tasks._assert_video_duration_within_upload_limit')
+    @patch('tasks._download_one_video')
+    @patch('tasks._resolve_video_path')
+    def test_skips_webgemini_upload_when_video_too_long(
+        self, mock_resolve, mock_dl, mock_duration, mock_compress, mock_create, mock_remove,
+    ):
+        from tasks import _process_one_video_download_summary_delete, SKIP_UPLOAD_TOO_LONG_PREFIX
+
+        mock_resolve.return_value = '/existing/long.mp4'
+        mock_duration.side_effect = ValueError(
+            f'{SKIP_UPLOAD_TOO_LONG_PREFIX} duration 3601.000s exceeds limit 3600s'
+        )
+
+        with patch('os.path.isfile', return_value=True):
+            out = _process_one_video_download_summary_delete({
+                'video_id': 'long-video',
+                'share_link': 'https://www.douyin.com/video/long-video',
+                'short_link': '',
+                'local_file_path': '/existing/long.mp4',
+            })
+
+        assert out['status'] == 'failed'
+        assert out['skip_reason'] == 'too_long'
+        assert out['error'].startswith(SKIP_UPLOAD_TOO_LONG_PREFIX)
+        mock_dl.assert_not_called()
+        mock_duration.assert_called_once_with('/existing/long.mp4')
+        mock_compress.assert_not_called()
+        mock_create.assert_called_once_with(
+            'long-video', 'https://www.douyin.com/video/long-video', status='failed',
+        )
         mock_remove.assert_called_once()
 
 

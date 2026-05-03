@@ -65,6 +65,7 @@ Environment variables (`.env`):
 | `BATCH_SIZE` | `20` | Videos per batch |
 | `WEBGEMINI_POLL_INTERVAL` | `5` | Poll interval in seconds for WebGemini jobs |
 | `WEBGEMINI_POLL_MAX_WAIT` | `1800` | Max wait in seconds before upload polling times out |
+| `MAX_UPLOAD_VIDEO_DURATION_SECONDS` | `3600` | Skip videos longer than this before WebGemini upload; set `0` to disable |
 | `ENABLE_VIDEO_COMPRESSION` | `true` | Compress videos with `ffmpeg` before upload |
 | `VIDEO_COMPRESSION_CRF` | `32` | `ffmpeg` CRF value; higher means smaller files |
 | `VIDEO_COMPRESSION_PRESET` | `veryfast` | `ffmpeg` x264 preset for compression speed vs size |

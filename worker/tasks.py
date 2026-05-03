@@ -34,6 +34,7 @@ try:
         WEBGEMINI_API_URL,
         WEBGEMINI_POLL_INTERVAL,
         WEBGEMINI_POLL_MAX_WAIT,
+        MAX_UPLOAD_VIDEO_DURATION_SECONDS,
         STALE_PROCESSING_HOURS,
         ORPHAN_FILE_GRACE_HOURS,
         TELEGRAM_BOT_TOKEN,
@@ -49,6 +50,7 @@ except ImportError:
     WEBGEMINI_API_URL = 'http://127.0.0.1:8200'
     WEBGEMINI_POLL_INTERVAL = 5
     WEBGEMINI_POLL_MAX_WAIT = 1800
+    MAX_UPLOAD_VIDEO_DURATION_SECONDS = 3600
     STALE_PROCESSING_HOURS = 24
     ORPHAN_FILE_GRACE_HOURS = 24
     ENABLE_VIDEO_COMPRESSION = True
@@ -75,6 +77,7 @@ logger = logging.getLogger(__name__)
 
 # Prefixed download error when Content-Length exceeds MAX_DOWNLOAD_SIZE_BYTES (for batch stats).
 SKIP_DOWNLOAD_TOO_LARGE_PREFIX = 'SKIP_DOWNLOAD_TOO_LARGE:'
+SKIP_UPLOAD_TOO_LONG_PREFIX = 'SKIP_UPLOAD_TOO_LONG:'
 
 
 def parse_video_id_from_url(url):
@@ -315,6 +318,54 @@ def _remove_local_file_and_clear_db(video_id, local_path):
         except OSError as e:
             logger.warning("Could not remove %s: %s", local_path, e)
     clear_video_local_path(video_id)
+
+
+def _probe_video_duration_seconds(local_path):
+    """Return local video duration in seconds using ffprobe."""
+    ffprobe_bin = shutil.which('ffprobe')
+    if not ffprobe_bin:
+        raise RuntimeError("ffprobe not found in PATH")
+
+    cmd = [
+        ffprobe_bin,
+        '-v', 'error',
+        '-show_entries', 'format=duration',
+        '-of', 'default=noprint_wrappers=1:nokey=1',
+        local_path,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    if result.returncode != 0:
+        err = (result.stderr or result.stdout or '').strip()
+        raise RuntimeError(f"ffprobe duration check failed: {err}")
+
+    raw_duration = (result.stdout or '').strip()
+    try:
+        duration = float(raw_duration)
+    except ValueError as exc:
+        raise RuntimeError(f"ffprobe returned invalid duration: {raw_duration!r}") from exc
+    if duration <= 0:
+        raise RuntimeError(f"ffprobe returned non-positive duration: {raw_duration!r}")
+    return duration
+
+
+def _assert_video_duration_within_upload_limit(local_path):
+    """Raise when local video exceeds the WebGemini upload duration limit."""
+    if MAX_UPLOAD_VIDEO_DURATION_SECONDS <= 0:
+        return None
+
+    duration = _probe_video_duration_seconds(local_path)
+    if duration > MAX_UPLOAD_VIDEO_DURATION_SECONDS:
+        raise ValueError(
+            f"{SKIP_UPLOAD_TOO_LONG_PREFIX} duration {duration:.3f}s exceeds limit "
+            f"{MAX_UPLOAD_VIDEO_DURATION_SECONDS}s"
+        )
+    logger.info(
+        "Video duration within webgemini upload limit: path=%s duration=%.3fs limit=%ss",
+        local_path,
+        duration,
+        MAX_UPLOAD_VIDEO_DURATION_SECONDS,
+    )
+    return duration
 
 
 def _compress_video_for_upload(local_path):
@@ -637,6 +688,18 @@ def _process_one_video_download_summary_delete(video):
 
         try:
             local_path = os.path.abspath(local_path)
+            try:
+                _assert_video_duration_within_upload_limit(local_path)
+            except ValueError as e:
+                err_msg = str(e)
+                create_or_update_video_summary(video_id, douyin_url, status='failed')
+                return {
+                    'status': 'failed',
+                    'video_id': video_id,
+                    'error': err_msg,
+                    'skip_reason': 'too_long',
+                }
+
             upload_path = _compress_video_for_upload(local_path)
             upload_path = os.path.abspath(upload_path)
             comments = get_comments_for_video(video_id)
@@ -691,6 +754,7 @@ def process_pending_videos(self, batch_size=20):
     completed = 0
     failed = 0
     skipped_too_large = 0
+    skipped_too_long = 0
     results = []
     success_rows = []
 
@@ -714,6 +778,13 @@ def process_pending_videos(self, batch_size=20):
                     'status': 'skipped_too_large',
                     'error': outcome.get('error', ''),
                 })
+            elif outcome.get('skip_reason') == 'too_long':
+                skipped_too_long += 1
+                results.append({
+                    'video_id': video_id,
+                    'status': 'skipped_too_long',
+                    'error': outcome.get('error', ''),
+                })
             else:
                 failed += 1
                 results.append({
@@ -735,6 +806,7 @@ def process_pending_videos(self, batch_size=20):
         'completed': completed,
         'failed': failed,
         'skipped_too_large': skipped_too_large,
+        'skipped_too_long': skipped_too_long,
         'total': len(videos),
         'results': results,
         'timestamp': datetime.now().isoformat(),

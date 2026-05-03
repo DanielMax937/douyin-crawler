@@ -34,6 +34,8 @@ MAX_DOWNLOAD_SIZE_BYTES = int(os.getenv('MAX_DOWNLOAD_SIZE_BYTES', str(2 * 1024 
 WEBGEMINI_API_URL = os.getenv('WEBGEMINI_API_URL', 'http://127.0.0.1:8200')
 WEBGEMINI_POLL_INTERVAL = int(os.getenv('WEBGEMINI_POLL_INTERVAL', '5'))
 WEBGEMINI_POLL_MAX_WAIT = int(os.getenv('WEBGEMINI_POLL_MAX_WAIT', '1800'))
+# Skip videos longer than this before uploading to WebGemini (default: 1 hour)
+MAX_UPLOAD_VIDEO_DURATION_SECONDS = int(os.getenv('MAX_UPLOAD_VIDEO_DURATION_SECONDS', '3600'))
 
 # Optional ffmpeg compression before upload
 ENABLE_VIDEO_COMPRESSION = os.getenv('ENABLE_VIDEO_COMPRESSION', 'true').lower() in ('1', 'true', 'yes', 'on')
