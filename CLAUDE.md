@@ -55,7 +55,7 @@ cd worker
 uv sync                      # Install dependencies
 
 # Start worker + beat (requires Redis running)
-./scripts/start-celery.sh    # Worker + Beat，含 scrape_douyin_daily（每天 2:00）
+./scripts/start-celery.sh    # Worker + Beat，含 scrape_douyin_daily（北京时间每天 23:00）
 ./scripts/stop-celery.sh     # 停止
 
 # CLI commands

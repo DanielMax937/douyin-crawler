@@ -840,7 +840,7 @@ def cleanup_orphan_download_files():
 @app.task(name='tasks.scrape_douyin_daily')
 def scrape_douyin_daily(count=100):
     """
-    每天凌晨 2 点执行（原 crontab 定时任务）。
+    每天北京时间晚上 11 点执行（Celery Beat 定时任务）。
     直接调用 node douyin-scraper.js 抓取新视频，不再依赖 server.js。
     """
     count = min(500, max(1, int(count)))
