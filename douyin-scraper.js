@@ -20,7 +20,7 @@
  * - SAVE_TO_FILE: Set to 'true' to save JSON/Markdown files (default: false, database only)
  * - BROWSER_USER_DATA_DIR: Chrome profile directory (default: OS temp/douyin-scraper-user-data)
  * - PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD: PostgreSQL connection settings
- * - MIN_COMMENTS_THRESHOLD: Minimum comments threshold (default: 3000)
+ * - MIN_COMMENTS_THRESHOLD: Minimum comments threshold (default: 5000)
  */
 
 const { chromium } = require('patchright');
@@ -37,7 +37,7 @@ const CONFIG = {
   SAVE_TO_FILE: process.env.SAVE_TO_FILE === 'true', // Default: false (database only)
   WAIT_TIMEOUT: 5000,
   MAX_COMMENTS: 10,
-  MIN_COMMENTS_THRESHOLD: Math.max(0, parseInt(process.env.MIN_COMMENTS_THRESHOLD || '3000', 10) || 3000),
+  MIN_COMMENTS_THRESHOLD: Math.max(0, parseInt(process.env.MIN_COMMENTS_THRESHOLD || '5000', 10) || 5000),
   // Human-like behavior settings
   HUMAN_DELAY: {
     MIN_WAIT: 800,      // Minimum wait time in ms

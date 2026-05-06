@@ -45,7 +45,7 @@ app.conf.beat_schedule = {
     },
     'scrape-douyin-daily': {
         'task': 'tasks.scrape_douyin_daily',
-        'schedule': crontab(hour=23, minute=0),  # 每天北京时间晚上 11 点
+        'schedule': crontab(hour=23, minute=55),  # 每天北京时间 23:55
     },
 }
 
