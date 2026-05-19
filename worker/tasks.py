@@ -77,6 +77,7 @@ logger = logging.getLogger(__name__)
 
 # Prefixed download error when Content-Length exceeds MAX_DOWNLOAD_SIZE_BYTES (for batch stats).
 SKIP_DOWNLOAD_TOO_LARGE_PREFIX = 'SKIP_DOWNLOAD_TOO_LARGE:'
+SKIP_DOWNLOAD_NON_VIDEO_PREFIX = 'SKIP_DOWNLOAD_NON_VIDEO:'
 SKIP_UPLOAD_TOO_LONG_PREFIX = 'SKIP_UPLOAD_TOO_LONG:'
 
 
@@ -216,6 +217,48 @@ def _parse_content_length_header(value) -> int | None:
         return None
 
 
+def _describe_local_file(path, sample_size=64):
+    """Return compact file diagnostics for logs."""
+    if not path:
+        return {'path': path, 'exists': False}
+    info = {
+        'path': path,
+        'exists': os.path.isfile(path),
+    }
+    if not info['exists']:
+        return info
+    try:
+        info['size'] = os.path.getsize(path)
+        with open(path, 'rb') as f:
+            sample = f.read(sample_size)
+        info['head_hex'] = sample.hex()
+        info['head_ascii'] = ''.join(chr(b) if 32 <= b <= 126 else '.' for b in sample)
+    except OSError as error:
+        info['error'] = str(error)
+    return info
+
+
+def _is_video_download_response(content_type, content_disposition):
+    media_type = (content_type or '').split(';', 1)[0].strip().lower()
+    disposition = (content_disposition or '').lower()
+    if media_type.startswith('video/'):
+        return True
+    if media_type in ('application/octet-stream', 'binary/octet-stream') and '.mp4' in disposition:
+        return True
+    if not media_type and '.mp4' in disposition:
+        return True
+    return False
+
+
+def _response_sample_for_log(resp, sample_size=512):
+    sample = resp.read(sample_size)
+    return {
+        'bytes_read': len(sample),
+        'head_hex': sample.hex(),
+        'head_ascii': ''.join(chr(b) if 32 <= b <= 126 else '.' for b in sample),
+    }
+
+
 def _download_one_video(video):
     """
     Download one video via Douyin API; write file and set local_file_path.
@@ -227,7 +270,10 @@ def _download_one_video(video):
     os.makedirs(download_dir, exist_ok=True)
     file_path = os.path.normpath(os.path.join(download_dir, f"douyin_{video_id}.mp4"))
     download_url = f"{DOWNLOAD_API_BASE_URL.rstrip('/')}/api/download"
-    params = f"url={urllib.parse.quote(url)}"
+    params = (
+        f"url={urllib.parse.quote(url)}"
+        f"&max_size_bytes={MAX_DOWNLOAD_SIZE_BYTES}"
+    )
     full_url = f"{download_url}?{params}"
     declared_size: int | None = None
     chunk_size = 1024 * 1024
@@ -240,18 +286,53 @@ def _download_one_video(video):
                 pass
 
     try:
+        logger.info(
+            "Download request for %s: api_url=%s source_url=%s target=%s",
+            video_id,
+            download_url,
+            url,
+            file_path,
+        )
         with urllib.request.urlopen(full_url, timeout=300) as resp:
+            content_type = resp.headers.get('Content-Type')
+            content_disposition = resp.headers.get('Content-Disposition')
             if resp.status != 200:
                 declared_size = _parse_content_length_header(resp.headers.get('Content-Length'))
                 logger.error(
-                    "Download failed for %s: HTTP %s (declared_content_length=%s)",
+                    "Download failed for %s: HTTP %s (content_type=%s, content_disposition=%s, declared_content_length=%s)",
                     video_id,
                     resp.status,
+                    content_type,
+                    content_disposition,
                     declared_size,
                 )
                 return False, None, f"HTTP {resp.status}"
 
             declared_size = _parse_content_length_header(resp.headers.get('Content-Length'))
+            logger.info(
+                "Download response for %s: HTTP %s content_type=%s content_disposition=%s declared_content_length=%s",
+                video_id,
+                resp.status,
+                content_type,
+                content_disposition,
+                declared_size,
+            )
+            if not _is_video_download_response(content_type, content_disposition):
+                sample_info = _response_sample_for_log(resp)
+                logger.warning(
+                    "Skip download for %s: non-video response content_type=%s content_disposition=%s "
+                    "declared_content_length=%s sample=%s",
+                    video_id,
+                    content_type,
+                    content_disposition,
+                    declared_size,
+                    sample_info,
+                )
+                return False, None, (
+                    f"{SKIP_DOWNLOAD_NON_VIDEO_PREFIX} content_type={content_type!r} "
+                    f"content_disposition={content_disposition!r} "
+                    f"declared_content_length={declared_size} sample={sample_info}"
+                )
             if declared_size is not None and declared_size > MAX_DOWNLOAD_SIZE_BYTES:
                 logger.warning(
                     "Skip download for %s: content-length %s exceeds limit %s",
@@ -284,19 +365,45 @@ def _download_one_video(video):
                 _remove_partial_file()
                 return False, None, str(stream_err)
 
+        file_info = _describe_local_file(file_path)
+        logger.info(
+            "Download saved for %s: declared_content_length=%s bytes_written=%s file_info=%s",
+            video_id,
+            declared_size,
+            bytes_written,
+            file_info,
+        )
+        if declared_size is not None and declared_size != bytes_written:
+            logger.warning(
+                "Download size mismatch for %s: declared_content_length=%s bytes_written=%s",
+                video_id,
+                declared_size,
+                bytes_written,
+            )
         update_video_local_path(video_id, file_path)
         return True, file_path, None
     except urllib.error.HTTPError as e:
         declared = _parse_content_length_header(
             e.headers.get('Content-Length') if e.headers else None
         )
+        error_body = ''
+        try:
+            error_body = e.read(512).decode('utf-8', errors='replace')
+        except Exception:
+            error_body = ''
         logger.error(
-            "Download failed for %s: HTTP %s (declared_content_length=%s)",
+            "Download failed for %s: HTTP %s (declared_content_length=%s, body_sample=%s)",
             video_id,
             e.code,
             declared,
+            error_body,
         )
         _remove_partial_file()
+        if e.code == 413:
+            return False, None, (
+                f"{SKIP_DOWNLOAD_TOO_LARGE_PREFIX} download api rejected source: "
+                f"{error_body or 'HTTP 413'}"
+            )
         return False, None, f"HTTP {e.code}"
     except Exception as e:
         _remove_partial_file()
@@ -336,6 +443,13 @@ def _probe_video_duration_seconds(local_path):
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
     if result.returncode != 0:
         err = (result.stderr or result.stdout or '').strip()
+        logger.error(
+            "ffprobe duration check failed for %s: returncode=%s file_info=%s error=%s",
+            local_path,
+            result.returncode,
+            _describe_local_file(local_path),
+            err,
+        )
         raise RuntimeError(f"ffprobe duration check failed: {err}")
 
     raw_duration = (result.stdout or '').strip()
@@ -682,6 +796,8 @@ def _process_one_video_download_summary_delete(video):
                 out = {'status': 'failed', 'video_id': video_id, 'error': err_msg}
                 if err_msg.startswith(SKIP_DOWNLOAD_TOO_LARGE_PREFIX):
                     out['skip_reason'] = 'too_large'
+                elif err_msg.startswith(SKIP_DOWNLOAD_NON_VIDEO_PREFIX):
+                    out['skip_reason'] = 'non_video'
                 return out
 
             local_path = path
@@ -755,6 +871,7 @@ def process_pending_videos(self, batch_size=20):
     failed = 0
     skipped_too_large = 0
     skipped_too_long = 0
+    skipped_non_video = 0
     results = []
     success_rows = []
 
@@ -785,6 +902,13 @@ def process_pending_videos(self, batch_size=20):
                     'status': 'skipped_too_long',
                     'error': outcome.get('error', ''),
                 })
+            elif outcome.get('skip_reason') == 'non_video':
+                skipped_non_video += 1
+                results.append({
+                    'video_id': video_id,
+                    'status': 'skipped_non_video',
+                    'error': outcome.get('error', ''),
+                })
             else:
                 failed += 1
                 results.append({
@@ -807,6 +931,7 @@ def process_pending_videos(self, batch_size=20):
         'failed': failed,
         'skipped_too_large': skipped_too_large,
         'skipped_too_long': skipped_too_long,
+        'skipped_non_video': skipped_non_video,
         'total': len(videos),
         'results': results,
         'timestamp': datetime.now().isoformat(),
@@ -824,7 +949,20 @@ def process_one_video_summary(self, video_id):
     video = get_video_by_id_for_processing(video_id)
     if not video:
         return {'status': 'failed', 'error': 'video not found', 'video_id': video_id}
-    return _process_one_video_download_summary_delete(video)
+    outcome = _process_one_video_download_summary_delete(video)
+    if outcome.get('status') == 'completed':
+        success_row = {
+            'video_id': outcome.get('video_id') or video_id,
+            'douyin_url': outcome.get('douyin_url') or '',
+            'ai_reply': outcome.get('ai_reply') or '',
+        }
+        try:
+            telegram_sent = _notify_telegram_douyin_success_batch([success_row])
+            outcome['telegram_sent'] = telegram_sent
+        except Exception as e:
+            logger.exception("Telegram notify failed for single-video %s: %s", video_id, e)
+            outcome['telegram_sent'] = False
+    return outcome
 
 
 @app.task(name='tasks.reset_stale_tasks')

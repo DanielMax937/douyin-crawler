@@ -56,6 +56,7 @@ const CONFIG = {
     database: process.env.PGDATABASE || 'douyin',
     user: process.env.PGUSER || process.env.USER || 'postgres',
     password: process.env.PGPASSWORD || 'postgres',
+    options: process.env.PGOPTIONS || '-c timezone=Asia/Shanghai',
   },
 };
 
@@ -862,7 +863,18 @@ async function scrapeVideo(page, videoIndex, options = {}) {
       video.comments = await extractComments(page);
       console.log(`  📝 Found ${video.comments.length} comments`);
 
-      await humanKeyPress(page, 'Escape');
+      // Close the comment panel by clicking the comment button again (mirrors the open action).
+      try {
+        const closeButton = activeVideo.locator(SELECTORS.commentButton).first();
+        if (await closeButton.count() > 0) {
+          await humanHoverAndClick(page, closeButton, { timeout: 5000 });
+        } else {
+          await humanKeyPress(page, 'Escape');
+        }
+      } catch (closeErr) {
+        console.log(`  ⚠️  Could not close comments via button: ${closeErr.message}`);
+        await humanKeyPress(page, 'Escape');
+      }
       await humanWait(300, 600);
     }
   } catch (err) {

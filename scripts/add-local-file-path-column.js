@@ -15,6 +15,7 @@ const CONFIG = {
   database: process.env.PGDATABASE || 'douyin',
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || 'postgres',
+  options: process.env.PGOPTIONS || '-c timezone=Asia/Shanghai',
 };
 
 async function main() {

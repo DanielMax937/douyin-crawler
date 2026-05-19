@@ -13,6 +13,7 @@ POSTGRES_CONFIG = {
     'database': os.getenv('PGDATABASE', 'douyin'),
     'user': os.getenv('PGUSER', 'postgres'),
     'password': os.getenv('PGPASSWORD', 'postgres'),
+    'options': os.getenv('PGOPTIONS', '-c timezone=Asia/Shanghai'),
 }
 
 # Schedule configuration

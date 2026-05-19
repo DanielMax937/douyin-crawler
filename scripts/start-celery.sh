@@ -8,17 +8,35 @@ WORKER_DIR="$REPO_DIR/worker"
 PID_FILE="$REPO_DIR/celery.pid"
 LOG_FILE="$REPO_DIR/celery.log"
 START_TIMEOUT="${DOUYIN_CRAWLER_START_TIMEOUT:-60}"
+CELERY_BIN="$REPO_DIR/worker/.venv/bin/celery"
 
 cd "$WORKER_DIR"
+
+clear_repo_celery_processes() {
+  # The uv supervisor PID is not enough: Celery prefork children can survive and
+  # keep Beat active, causing duplicate scheduled tasks.
+  if pgrep -f "$CELERY_BIN" >/dev/null 2>&1; then
+    echo "Clearing existing Celery worker/beat processes for this repo..."
+    pkill -TERM -f "$CELERY_BIN" 2>/dev/null || true
+    sleep 2
+    pkill -KILL -f "$CELERY_BIN" 2>/dev/null || true
+  fi
+}
 
 if [ -f "$PID_FILE" ]; then
   OLD_PID=$(cat "$PID_FILE")
   if kill -0 "$OLD_PID" 2>/dev/null; then
-    echo "Celery already running (PID: $OLD_PID)"
-    exit 1
+    echo "Stopping existing Celery supervisor (PID: $OLD_PID)..."
+    kill "$OLD_PID" 2>/dev/null || true
+    sleep 2
+    if kill -0 "$OLD_PID" 2>/dev/null; then
+      kill -9 "$OLD_PID" 2>/dev/null || true
+    fi
   fi
   rm -f "$PID_FILE"
 fi
+
+clear_repo_celery_processes
 
 wait_until_ready() {
   local service_pid="$1"

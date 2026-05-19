@@ -28,7 +28,7 @@ def get_videos_without_summary(limit=20):
                 LEFT JOIN video_tasks t ON v.video_id = t.video_id
                 WHERE t.id IS NULL
                    OR (t.status != 'completed' AND t.status != 'processing')
-                ORDER BY v.created_at ASC
+                ORDER BY v.created_at DESC
                 LIMIT %s
                 FOR UPDATE OF v SKIP LOCKED
             """, (limit,))
@@ -282,7 +282,7 @@ def get_videos_pending_summary(limit=20):
                     OR (v.share_link IS NOT NULL AND v.share_link != '')
                     OR (v.short_link IS NOT NULL AND v.short_link != '')
                   )
-                ORDER BY v.created_at ASC
+                ORDER BY v.created_at DESC
                 LIMIT %s
             """, (limit,))
             return cur.fetchall()
